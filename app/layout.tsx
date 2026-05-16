@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { DM_Serif_Display, Montserrat, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import SmoothScrollProvider from "@/components/provider/SmoothScrollprovider";
+import NextTopLoader from "nextjs-toploader";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -32,7 +34,12 @@ export default function RootLayout({
       lang="en"
       className={cn(dmSerif.variable, montserrat.variable, "font-sans", geist.variable)}
     >
-      <body>{children}</body>
+      <body>
+         <NextTopLoader color="#004EB0" height={3} showSpinner={false} />
+        <SmoothScrollProvider>
+        {children}
+        </SmoothScrollProvider>
+        </body>
     </html>
   );
 }

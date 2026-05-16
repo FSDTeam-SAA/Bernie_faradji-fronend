@@ -10,7 +10,7 @@ export default function AboutUs() {
   ];
 
   return (
-    <section className="bg-[#F8FBFF] py-20 md:py-24">
+    <section id="about" className="scroll-mt-28 bg-[#F8FBFF] py-20 md:py-24">
       <div className="mx-auto w-full max-w-[1080px] px-4 md:px-6">
         <div className="mx-auto container text-center">
           <h2 className="text-[44px] leading-none font-normal text-[#353535] md:text-[52px]">
