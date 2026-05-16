@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function InsuranceOpportunities() {
   return (
-    <section className="overflow-hidden bg-[#F8FBFF] py-20 md:py-24 lg:py-28">
+    <section id="insurance" className="scroll-mt-28 overflow-hidden bg-[#F8FBFF] py-20 md:py-24 lg:py-28">
       <div className="container mx-auto px-4 md:px-0">
         <div className="grid items-center gap-14 lg:grid-cols-2">
           {/* Left Content */}
