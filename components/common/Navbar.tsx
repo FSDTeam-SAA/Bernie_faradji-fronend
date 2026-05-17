@@ -18,13 +18,12 @@ type NavItem = {
   href: string;
 };
 
-// শুধু এই list edit করলেই navbar menu link/route change হবে.
 const NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/" },
   { label: "Lottery", href: "/lottery" },
   { label: "Insurance", href: "/insurance" },
-  { label: "Journey Plan", href: "/#journey-plan" },
-  { label: "About", href: "/#about" },
+  { label: "Journey Plan", href: "/journey" },
+  { label: "About", href: "/about" },
 ];
 
 function isActivePath(pathname: string, href: string) {

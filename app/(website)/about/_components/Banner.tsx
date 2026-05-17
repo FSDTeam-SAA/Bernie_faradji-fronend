@@ -17,7 +17,7 @@ interface HeroProps {
   buttons?: HeroButton[];
 }
 
-export default function Hero({
+export default function Banner({
   heading,
   description,
   imageSrc,
@@ -99,10 +99,10 @@ export default function Hero({
       />
 
       {/* Hero Content */}
-      <div className="relative z-10 flex items-center justify-center lg:justify-start pt-24 sm:pt-32 lg:pt-80 min-h-[600px]">
+      <div className="relative z-10 flex items-center justify-center lg:justify-start pt-24 sm:pt-32 lg:pt-80 min-h-150">
         <div className="container mx-auto px-4 md:px-6">
           <motion.div
-            className="text-center lg:text-left max-w-[620px]"
+            className="text-center "
             variants={contentVariants}
             initial="hidden"
             animate="show"
@@ -110,7 +110,7 @@ export default function Hero({
             {/* Heading */}
             <motion.h1
               variants={itemVariants}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-normal leading-tight tracking-tight text-white drop-shadow-[0_14px_28px_rgba(0,0,0,0.35)]"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-normal text-center leading-tight tracking-tight text-white drop-shadow-[0_14px_28px_rgba(0,0,0,0.35)]"
             >
               {heading}
             </motion.h1>
@@ -118,7 +118,7 @@ export default function Hero({
             {/* Description */}
             <motion.p
               variants={itemVariants}
-              className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-white/90 leading-7"
+              className="mt-4 w-300 mx-auto sm:mt-6 text-base sm:text-lg md:text-xl text-white/90 leading-7"
             >
               {description}
             </motion.p>
