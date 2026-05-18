@@ -92,34 +92,35 @@ export default function OneDayPass() {
   }, [isCalendarOpen]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <motion.section
         initial={{ opacity: 0, y: 26 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55 }}
         viewport={{ once: true, amount: 0.2 }}
-        className="rounded-[10px] p-4  sm:p-5 md:p-6"
+        className="rounded-[14px] p-4  sm:p-5 md:rounded-[10px] md:p-6 md:shadow-none"
       >
         <div className="space-y-4">
-          <h3 className="montserrat flex items-center gap-2 text-[24px] font-semibold text-[#004EAF]">
-            <CarFront className="size-[24px]" />
+          <h3 className="montserrat flex items-center gap-2 text-[20px] font-semibold text-[#004EAF] sm:text-[22px] md:text-[24px]">
+            <CarFront className="size-5 sm:size-6" />
             Vehicle Details
           </h3>
 
           <div>
-            <label className="montserrat text-[16px] text-[#595959]">vehicle registration number (vrn)</label>
+            <label className="montserrat text-[14px] text-[#595959] sm:text-[15px] md:text-[16px]">
+              Vehicle registration number (VRN)
+            </label>
             <div className="relative mt-1.5">
               <input
                 type="text"
                 placeholder="E.G. LN24 DRV"
-                className="montserrat h-12 w-full rounded-[6px]  bg-[#F7F9FB] px-3 text-[16px] text-[#5d5959] outline-none transition-all placeholder:text-[#A1ACBC]"
+                className="montserrat h-11 w-full rounded-[8px] border border-[#D8E2F1] bg-[#F7F9FB] px-3 text-[15px] text-[#5d5959] outline-none transition-all placeholder:text-[#A1ACBC] focus:border-[#0A4EA5]/55 focus:bg-white sm:h-12 sm:text-[16px]"
               />
-             
             </div>
           </div>
 
           <div>
-            <label htmlFor="preferred-date" className="montserrat text-[16px] text-[#595959]">
+            <label htmlFor="preferred-date" className="montserrat text-[14px] text-[#595959] sm:text-[15px] md:text-[16px]">
               Enter Preferred Date
             </label>
             <input
@@ -130,14 +131,14 @@ export default function OneDayPass() {
               readOnly
               onClick={() => setIsCalendarOpen(true)}
               onFocus={() => setIsCalendarOpen(true)}
-              className="montserrat mt-1.5 h-12 w-full cursor-pointer rounded-[6px]  bg-[#F7F9FB] px-3 text-[16px] text-[#5d5959] outline-none transition-all placeholder:text-[#A1ACBC] focus:border-[#0A4EA5]/55 focus:bg-white"
+              className="montserrat mt-1.5 h-11 w-full cursor-pointer rounded-[8px] border border-[#D8E2F1] bg-[#F7F9FB] px-3 text-[15px] text-[#5d5959] outline-none transition-all placeholder:text-[#A1ACBC] focus:border-[#0A4EA5]/55 focus:bg-white sm:h-12 sm:text-[16px]"
             />
           </div>
 
           <div ref={datePickerRef}>
-            <p className="montserrat text-[14px] text-[#0B4FA8]">Select a Date</p>
+            <p className="montserrat text-[13px] text-[#0B4FA8] sm:text-[14px]">Select a Date</p>
             {isCalendarOpen && (
-              <div className="mt-2 w-[260px] rounded-[6px] border border-[#E4EAF4] bg-white p-2">
+              <div className="mt-2 w-full max-w-[260px] rounded-[8px] border border-[#E4EAF4] bg-white p-2 shadow-[0_10px_20px_rgba(10,78,165,0.1)]">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
@@ -164,12 +165,12 @@ export default function OneDayPass() {
           viewport={{ once: true, amount: 0.2 }}
           className="mt-7"
         >
-          <h4 className="montserrat flex items-center gap-2 text-[24px] font-semibold text-[#004EAF]">
-            <CarFront className="size-[24px]" />
+          <h4 className="montserrat flex items-center gap-2 text-[20px] font-semibold text-[#004EAF] sm:text-[22px] md:text-[24px]">
+            <CarFront className="size-5 sm:size-6" />
             Choose Your Preferred Journey
           </h4>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
             {journeyOptions.map((option, idx) => {
               const isActive = selectedJourney === option.id;
 
@@ -185,7 +186,7 @@ export default function OneDayPass() {
                   transition={{ duration: 0.35, delay: idx * 0.08 }}
                   viewport={{ once: true, amount: 0.3 }}
                   className={cn(
-                    'rounded-[8px] border p-3 text-left transition-all duration-300',
+                    'rounded-[10px] border p-3.5 text-left transition-all duration-300',
                     isActive
                       ? 'border-[#A6CFFF] bg-[#F8FBFF] shadow-[0_10px_20px_rgba(9,78,165,0.14)]'
                       : 'border-[#DCE6F3] bg-white hover:border-[#BED3F1]'
@@ -206,16 +207,22 @@ export default function OneDayPass() {
                     </span>
                   </div>
 
-                  <p className="montserrat text-[24px] font-bold text-[#2B2B2B]">{option.title}</p>
-                  <p className="montserrat mt-3 min-h-12 text-[14px] leading-4 text-[#747474]">
+                  <p className="montserrat text-[18px] font-bold text-[#2B2B2B] sm:text-[20px] md:text-[24px]">
+                    {option.title}
+                  </p>
+                  <p className="montserrat mt-2 min-h-10 text-[13px] leading-5 text-[#747474] sm:mt-3 sm:text-[14px] sm:leading-4">
                     {option.description}
                   </p>
 
-                  <div className="mt-2 flex items-center gap-1 text-[16px]">
+                  <div className="mt-2 flex items-center gap-1 text-[14px] sm:text-[16px]">
                     <span className="montserrat text-[#9F9F9F] line-through">{option.oldPrice}</span>
-                    <span className="montserrat font-semibold text-[#004EAF] bg-[#E6EDF7] p-1 rounded-[4px]">{option.save}</span>
+                    <span className="montserrat rounded-[4px] bg-[#E6EDF7] p-1 font-semibold text-[#004EAF]">
+                      {option.save}
+                    </span>
                   </div>
-                  <p className="montserrat mt-1 text-[24px] font-semibold text-[#004EAF]">{option.price}</p>
+                  <p className="montserrat mt-1 text-[22px] font-semibold text-[#004EAF] sm:text-[24px]">
+                    {option.price}
+                  </p>
                 </motion.button>
               );
             })}
@@ -228,24 +235,24 @@ export default function OneDayPass() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
         viewport={{ once: true, amount: 0.3 }}
-        className="relative mx-auto w-full max-w-[430px] overflow-hidden rounded-[10px] border border-[#E0E8F4] bg-[#F4F7FC] p-5 shadow-[0_14px_28px_rgba(11,65,137,0.14)]"
+        className="relative mx-auto w-full max-w-[430px] overflow-hidden rounded-[12px] border border-[#E0E8F4] bg-[#F4F7FC] p-4 shadow-[0_14px_28px_rgba(11,65,137,0.14)] sm:p-5"
       >
         <div className="absolute -right-12 -top-12 size-[120px] rounded-full bg-[#0A4EA5]/8 blur-2xl"></div>
 
-        <h5 className="montserrat text-[24px] font-semibold text-[#2E3542]">Payment Summary</h5>
-        <div className="montserrat mt-4 flex items-center justify-between text-[13px] font-semibold text-[#0A4EA5]">
+        <h5 className="montserrat text-[20px] font-semibold text-[#2E3542] sm:text-[24px]">Payment Summary</h5>
+        <div className="montserrat mt-3 flex items-center justify-between text-[12px] font-semibold text-[#0A4EA5] sm:mt-4 sm:text-[13px]">
           <span>{activeJourney.title} (1 Day)</span>
           <span>{activeJourney.price}</span>
         </div>
 
         <div className="my-4 h-px bg-[#D9E3F1]"></div>
 
-        <div className="montserrat flex items-center justify-between text-[#2B3240]">
-          <span className="text-[27px] font-semibold">Total Due</span>
-          <span className="text-[48px] font-semibold">{activeJourney.price}</span>
+        <div className="montserrat flex items-center justify-between gap-3 text-[#2B3240]">
+          <span className="text-[22px] font-semibold sm:text-[27px]">Total Due</span>
+          <span className="text-[38px] font-semibold leading-none sm:text-[48px]">{activeJourney.price}</span>
         </div>
 
-        <Button className="montserrat mt-4 h-12 cursor-pointer w-full rounded-[7px] bg-[#004EB0] text-[16px] font-semibold text-white ] hover:bg-[#004EB0]/90">
+        <Button className="montserrat mt-4 h-11 w-full cursor-pointer rounded-[8px] bg-[#004EB0] text-[15px] font-semibold text-white hover:bg-[#004EB0]/90 sm:h-12 sm:text-[16px]">
           Proceed to Secure Payment
         </Button>
       </motion.section>
