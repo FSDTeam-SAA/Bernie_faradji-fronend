@@ -4,20 +4,80 @@ import type { FormEvent } from 'react'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { Eye, EyeOff } from 'lucide-react'
+import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { AuthLayout, AuthLogo } from '@/components/auth/auth-layout'
 
+const getReadableAuthError = (error: string) => {
+  const decodedError = decodeURIComponent(error)
+
+  if (decodedError === 'CredentialsSignin') {
+    return 'Login failed. Check your API URL or credentials and try again.'
+  }
+
+  if (decodedError === 'AccessDenied') {
+    return 'You are not allowed to log in with this account.'
+  }
+
+  if (decodedError === 'Configuration') {
+    return 'Login is temporarily unavailable. Please try again later.'
+  }
+
+  return decodedError || 'Login failed. Please try again.'
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    router.push('/')
+
+    if (isSubmitting) return
+
+    const trimmedEmail = email.trim()
+
+    if (!trimmedEmail || !password) {
+      toast.error('Please enter both email and password.')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const result = await signIn('credentials', {
+        email: trimmedEmail,
+        password,
+        redirect: false,
+        callbackUrl: '/',
+      })
+
+      if (!result) {
+        toast.error('Login failed. Please try again.')
+        return
+      }
+
+      if (result.error) {
+        toast.error(getReadableAuthError(result.error))
+        return
+      }
+
+      toast.success('Login successful')
+      router.push(result.url ?? '/')
+      router.refresh()
+    } catch {
+      toast.error('Something went wrong. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -40,6 +100,8 @@ export default function LoginPage() {
             id="email"
             type="email"
             required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             placeholder="Enter your email address..."
             className="w-full px-4 h-12 bg-[#EAEAEA] montserrat border-0 rounded-lg text-sm md:text-base placeholder:text-[#787878] focus:ring-2 focus:ring-blue-600"
           />
@@ -54,6 +116,8 @@ export default function LoginPage() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               placeholder="Enter password..."
               className="w-full px-4 h-12 montserrat bg-[#EAEAEA] border-0 rounded-[12px] text-sm md:text-base focus:ring-2 focus:ring-blue-600 pr-10"
             />
@@ -82,9 +146,10 @@ export default function LoginPage() {
 
         <Button
           type="submit"
+          disabled={isSubmitting}
           className="w-full cursor-pointer h-12 montserrat bg-[#033D86] hover:bg-[#033D86]/90 text-white font-semibold py-2.5 md:py-3 rounded-lg text-sm md:text-base"
         >
-          Sign In
+          {isSubmitting ? 'Signing In...' : 'Sign In'}
         </Button>
 
         <p className="text-center text-sm text-gray-600">

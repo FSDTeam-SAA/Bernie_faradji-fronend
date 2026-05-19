@@ -37,7 +37,7 @@ export default function Navbar() {
 
   return (
     <header className="fixed left-0 top-0 z-50 w-full px-3 pt-4 md:px-5">
-      <div className="container mx-auto rounded-[12px]   p-px shadow-[0_20px_45px_rgba(0,75,170,0.25)]">
+      <div className="container mx-auto rounded-[12px] p-px">
         <nav className="flex h-20 items-center justify-between rounded-[12px] bg-white px-4 backdrop-blur-xl md:px-6">
           <Link href="/" className="flex items-center gap-2">
             <div className="h-12.5 w-40 md:h-14 md:w-45.5">
@@ -60,8 +60,8 @@ export default function Navbar() {
                   key={item.label}
                   href={item.href}
                   className={cn(
-                    "relative rounded-full montserrat  px-4 py-2 text-base font-medium text-[#6D7A8B] transition-all duration-300 hover:text-[#005cc8]",
-                    active && " text-[#005cc8] shadow-inner"
+                    "relative rounded-full montserrat px-4 py-2 text-base font-medium text-[#6D7A8B] transition-all duration-300 hover:text-[#005cc8]",
+                    active && "text-[#005cc8] shadow-inner"
                   )}
                 >
                   {item.label}
@@ -77,12 +77,18 @@ export default function Navbar() {
           </div>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <Button variant="secondary" className="h-11 montserrat rounded-[12px] bg-white px-6 text-sm font-semibold text-[#005ce6] shadow-md hover:bg-[#f6f9ff]">
-              Login
+            <Button
+              asChild
+              variant="secondary"
+              className="h-11 montserrat rounded-[12px]  hover:-translate-y-0.5 bg-white px-6 text-sm font-semibold text-[#005ce6] shadow-md hover:bg-[#f6f9ff]"
+            >
+              <Link href="/login">Login</Link>
             </Button>
-            <Button className="h-11 montserrat rounded-[12px] bg-[#004EB0] px-6 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#004EB0]/90">
-              Signup
-            </Button>
+            <button
+              className="h-11 montserrat curosor-pointer rounded-[12px] bg-[#004EB0] px-6 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#004EB0]/90"
+            >
+              <Link href="/signup">Signup </Link>
+            </button>
           </div>
 
           <Sheet>
@@ -101,7 +107,6 @@ export default function Navbar() {
               side="right"
               className="w-[86%] max-w-90 border-l border-[#d9e6ff] bg-linear-to-b from-[#f6faff] via-white to-[#f1f8ff] p-0"
             >
-
               <div className="flex flex-col gap-2 px-4 py-5">
                 {NAV_ITEMS.map((item) => {
                   const active = isActivePath(pathname, item.href);
@@ -124,14 +129,21 @@ export default function Navbar() {
 
               <div className="mt-auto grid gap-3 px-4 pb-6">
                 <SheetClose asChild>
-                  <Button variant="secondary" className="h-11 rounded-full bg-white text-[#005ce6] shadow-md hover:bg-[#f5f9ff] ">
-                    Login
-                  </Button>
+                  <Link href="/login">
+                    <Button
+                      variant="secondary"
+                      className="h-11 rounded-full bg-white text-[#005ce6] shadow-md hover:bg-[#f5f9ff]"
+                    >
+                      Login
+                    </Button>
+                  </Link>
                 </SheetClose>
                 <SheetClose asChild>
-                  <Button className="h-11 rounded-full bg-[#004EB0] text-white shadow-md hover:bg-[#004EB0]/90">
-                    Signup
-                  </Button>
+                  <Link href="/signup">
+                    <Button className="h-11 rounded-full bg-[#004EB0] text-white shadow-md hover:bg-[#004EB0]/90">
+                      Signup 
+                    </Button>
+                  </Link>
                 </SheetClose>
               </div>
             </SheetContent>
