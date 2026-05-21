@@ -1,22 +1,77 @@
 'use client';
+
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { useSession } from "next-auth/react";
+import { se } from "date-fns/locale";
 
 export default function GrabToken() {
   const [tokenCount, setTokenCount] = useState(1);
+  const [vehicleNumber, setVehicleNumber] = useState('');
+  const session=useSession();
+  const token=session.data?.accessToken
+ 
+  
   const tokenPrice = 15;
 
   const handleIncrease = () => setTokenCount((prev) => prev + 1);
   const handleDecrease = () =>
     setTokenCount((prev) => (prev > 1 ? prev - 1 : 1));
 
+  // TanStack Query Mutation
+  const mutation = useMutation({
+    mutationFn: async (payload: { quantity: number; vehicleNumber: string }) => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tokens/buy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to create checkout session');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast.success('Checkout session created!', {
+        description: 'Redirecting to payment page...',
+      });
+
+      // Redirect to Stripe Checkout URL
+      if (data?.data?.url) {
+        window.location.href = data.data.url;
+      } else {
+        toast.error('Invalid response from server');
+      }
+    },
+    onError: (error: Error) => {
+      toast.error('Payment Failed', {
+        description: error.message || 'Something went wrong. Please try again.',
+      });
+    },
+  });
+
   const handleProceed = () => {
-    alert(`You selected ${tokenCount} token(s) costing £${tokenCount * tokenPrice}`);
+    if (!vehicleNumber.trim()) {
+      toast.error('Please enter vehicle number');
+      return;
+    }
+
+    mutation.mutate({
+      quantity: tokenCount,
+      vehicleNumber: vehicleNumber.trim(),
+    });
   };
 
   return (
-    <section className=" py-20 md:py-24 lg:py-28">
-      <div className="container mx-auto px-4 md:px-6 ">
+    <section className="py-20 md:py-24 lg:py-28">
+      <div className="container mx-auto px-4 md:px-6">
         {/* Heading */}
         <div className="text-center mb-10">
           <h2 className="text-3xl font-normal text-[#4E4E4E] md:text-5xl">
@@ -70,22 +125,25 @@ export default function GrabToken() {
           {/* Vehicle Number */}
           <div className="mb-4">
             <label className="block text-base montserrat font-medium text-gray-700 mb-2">
-              Vehicle Number *
+              Vehicle Number <span className="text-[#8C311E]">*</span>
             </label>
             <input
               type="text"
               placeholder="Enter Vehicle Number..."
-              className="w-full rounded-lg bg-[#EAEAEA] montserrat  px-4 h-12 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={vehicleNumber}
+              onChange={(e) => setVehicleNumber(e.target.value)}
+              className="w-full rounded-lg bg-[#EAEAEA] montserrat px-4 h-12 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           {/* Proceed Button */}
-          <Button
+          <button
             onClick={handleProceed}
-            className="w-full mt-4 h-12 cursor-pointer !montserrat rounded-md bg-[#004EAF] text-white font-bold text-base  hover:bg-[#004EAF]/90 transition"
+            disabled={mutation.isPending || !vehicleNumber.trim()}
+            className="w-full mt-4 h-12 cursor-pointer montserrat rounded-md bg-[#004EAF] text-white font-bold text-base hover:bg-[#004EAF]/90 transition disabled:opacity-70"
           >
-            Proceed
-          </Button>
+            {mutation.isPending ? 'Processing...' : 'Proceed '}
+          </button>
         </div>
       </div>
     </section>
