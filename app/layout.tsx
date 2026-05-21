@@ -49,7 +49,7 @@ export default function RootLayout({
         <QueryClientProvider>
           <SmoothScrollProvider>
             <AuthSessionProvider>{children}</AuthSessionProvider>
-            <Toaster />
+            <Toaster position="top-right" richColors />
           </SmoothScrollProvider>
         </QueryClientProvider>
       </body>
