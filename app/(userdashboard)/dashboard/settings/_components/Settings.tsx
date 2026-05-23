@@ -386,12 +386,12 @@ export default function Settings(): React.JSX.Element {
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6 p-6">
               <h3 className="text-lg font-bold text-[#1a253c] tracking-tight">
                 Password Settings
               </h3>
 
-              <div className="space-y-4">
+              <div className="space-y-4 ">
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-bold text-slate-500">
                     Old Password
@@ -492,7 +492,7 @@ export default function Settings(): React.JSX.Element {
             </div>
           )}
 
-          <div className="flex justify-end gap-4 pt-8 mt-4 border-t border-slate-50">
+          <div className="flex justify-end gap-4 pt-8 mt-4 border-t border-slate-50 p-6">
             <button
               type="button"
               onClick={handleDiscard}
