@@ -100,7 +100,8 @@ const fetchSubscriptionPlans = async (): Promise<SubscriptionPlanApiItem[]> => {
   }
 
   const data: PlansApiResponse = await response.json();
-  return data.data?.plans ?? [];
+  const plans = data.data?.plans ?? [];
+  return plans.filter((plan) => plan.isActive === true);
 };
 
 const getPackageItems = (packageIncludes?: string): string[] => {
