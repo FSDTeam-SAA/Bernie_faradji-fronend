@@ -55,14 +55,20 @@ interface JourneyCheckoutResponse {
   };
 }
 
+interface JourneySettingsApiResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    lateFee?: number;
+  };
+}
+
 const gbpFormatter = new Intl.NumberFormat('en-GB', {
   style: 'currency',
   currency: 'GBP',
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
-const LATE_FEE_AMOUNT = 9;
-
 const getApiBaseUrl = (): string => {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (!apiBaseUrl) {
@@ -96,6 +102,29 @@ const fetchJourneyCategories = async (): Promise<CategoryApiItem[]> => {
 
   const data: CategoriesApiResponse = await response.json();
   return data.data?.categories ?? [];
+};
+
+const fetchLateFeeSetting = async (): Promise<number> => {
+  const response = await fetch(`${getApiBaseUrl()}/journeys/settings`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readApiErrorMessage(response, 'Something went wrong while fetching journey settings.'));
+  }
+
+  const data: JourneySettingsApiResponse = await response.json();
+  const lateFee = data.data?.lateFee;
+
+  if (typeof lateFee !== 'number' || Number.isNaN(lateFee) || lateFee < 0) {
+    return 0;
+  }
+
+  return lateFee;
 };
 
 const formatPrice = (value?: number): string => gbpFormatter.format(value ?? 0);
@@ -151,6 +180,11 @@ export default function OneDayPass() {
     queryFn: fetchJourneyCategories,
   });
 
+  const { data: configuredLateFee = 0 } = useQuery<number, Error>({
+    queryKey: ['journey-settings-late-fee'],
+    queryFn: fetchLateFeeSetting,
+  });
+
   const journeyOptions = useMemo(
     () => categories.map(mapCategoryToJourneyOption),
     [categories]
@@ -186,7 +220,7 @@ export default function OneDayPass() {
     [selectedJourneyDate, today]
   );
   const hasLateFee = daysFromToday !== null && daysFromToday >= 0 && daysFromToday <= 1;
-  const lateFeeAmount = hasLateFee ? LATE_FEE_AMOUNT : 0;
+  const lateFeeAmount = hasLateFee ? configuredLateFee : 0;
   const basePriceValue = activeJourney?.priceValue ?? 0;
   const totalDueValue = basePriceValue + lateFeeAmount;
   const summaryTitle = activeJourney?.title ?? 'Journey';
@@ -488,7 +522,7 @@ export default function OneDayPass() {
           <div className="montserrat mt-2 flex items-center justify-between text-[17px]">
             <span className="flex items-center gap-1 ">
               <CircleAlert className="size-4 text-red-500" />
-              <p className="text-red-500">Late Fee 1</p>
+              <p className="text-red-500">Late Fee</p>
             </span>
             <span className="font-semibold text-red-500">{summaryLateFee}</span>
           </div>

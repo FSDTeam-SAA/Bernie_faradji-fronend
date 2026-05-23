@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useSession } from "next-auth/react";
-import { se } from "date-fns/locale";
 
 export default function GrabToken() {
   const [tokenCount, setTokenCount] = useState(1);
@@ -109,7 +108,7 @@ export default function GrabToken() {
                 <button
                   type="button"
                   onClick={handleIncrease}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center transition"
+                  className="flex h-10 w-10 shrink-0 items-center cursor-pointer justify-center transition"
                 >
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-2xl text-[#004EB0]">
                     +
@@ -132,7 +131,7 @@ export default function GrabToken() {
               placeholder="Enter Vehicle Number..."
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value)}
-              className="w-full rounded-lg bg-[#EAEAEA] montserrat px-4 h-12 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg bg-[#EAEAEA] uppercase montserrat px-4 h-12 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 

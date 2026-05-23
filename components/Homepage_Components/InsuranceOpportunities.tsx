@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function InsuranceOpportunities() {
   return (
@@ -28,11 +29,13 @@ export default function InsuranceOpportunities() {
 
               {/* Button */}
               <div className="mt-10">
-                <Button className="group montserrat h-14 rounded-md bg-[#004EB0] px-8 text-base font-bold text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-[#004EB0]/90 hover:shadow-2xl">
+                <Link href="/insurance">
+                <Button className="group montserrat cursor-pointer h-14 rounded-md bg-[#004EB0] px-8 text-base font-bold text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-[#004EB0]/90 hover:shadow-2xl">
                   View Insurance Listings
 
                   <ArrowRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
+                </Link>
               </div>
             </div>
           </div>
