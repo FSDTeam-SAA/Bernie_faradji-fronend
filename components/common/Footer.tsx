@@ -19,17 +19,17 @@ export default function Footer() {
 
           {/* Footer Links */}
           <div className="hidden md:flex space-x-8 text-base montserrat ">
-            <Link href="/terms-of-service" className="hover:underline">
-              Terms of Service
+            <Link href="/lottery" className="hover:underline">
+              Lottery
             </Link>
-            <Link href="/privacy-policy" className="hover:underline">
-              Privacy Policy
+            <Link href="/insurance" className="hover:underline">
+            Insurance
             </Link>
-            <Link href="/about-us" className="hover:underline">
+            <Link href="/journey" className="hover:underline">
+              Journey Plan
+            </Link>
+            <Link href="/about" className="hover:underline">
               About Us
-            </Link>
-            <Link href="/contact-us" className="hover:underline">
-              Contact Us
             </Link>
           </div>
         </div>
