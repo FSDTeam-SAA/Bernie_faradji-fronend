@@ -84,6 +84,8 @@ export function Sidebar() {
       >
         {/* Logo */}
         <div className="relative flex items-center justify-center py-6 border-b">
+          <Link href="/" >
+        
           <Image
             src="/logo.png"
             alt="Logo"
@@ -91,7 +93,7 @@ export function Sidebar() {
             height={60}
             className="object-contain"
           />
-
+          </Link>
           {/* Close Button */}
           {isMobileMenuOpen && (
             <button
@@ -145,9 +147,9 @@ export function Sidebar() {
 
         {/* Logout */}
         <div className="px-4 pb-6">
-          <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-red-500 hover:bg-red-50 transition-all duration-200">
+          <button className="flex w-full items-center cursor-pointer gap-3 border border-red-500 rounded-[4px] px-4 py-3 text-red-500 hover:bg-red-50 transition-all duration-200">
             <LogOut className="h-5 w-5" />
-            <span className="text-[15px] font-medium">Log Out</span>
+            <span className="text-[15px] font-medium ">Log Out</span>
           </button>
         </div>
       </div>

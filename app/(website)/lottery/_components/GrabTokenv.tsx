@@ -8,8 +8,8 @@ import { useSession } from "next-auth/react";
 export default function GrabToken() {
   const [tokenCount, setTokenCount] = useState(1);
   const [vehicleNumber, setVehicleNumber] = useState('');
-  const session=useSession();
-  const token=session.data?.accessToken
+  const session = useSession();
+  const token = session.data?.accessToken;
  
   
   const tokenPrice = 15;
@@ -57,6 +57,11 @@ export default function GrabToken() {
   });
 
   const handleProceed = () => {
+    if (session.status !== "authenticated" || !token) {
+      toast.error('Please login first');
+      return;
+    }
+
     if (!vehicleNumber.trim()) {
       toast.error('Please enter vehicle number');
       return;
