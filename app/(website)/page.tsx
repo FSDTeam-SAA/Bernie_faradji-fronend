@@ -32,7 +32,7 @@ export default function HomePage() {
       >
         <Hero
           heading="Win Big London’s Essential Prize Draw"
-          description="Enter our exclusive monthly raffle by purchasing entry tokens and get a chance to win luxury rewards, travel experiences, and exciting premium prize."
+          description="Enter our exclusive monthly raffle by purchasing entry tokens and get a chance to win luxury rewards, travel experiences, and exciting premium prizes."
           imageSrc="/hero.png"
           buttons={[
             { text: "Buy Entry Tokens", href: "/lottery" },
