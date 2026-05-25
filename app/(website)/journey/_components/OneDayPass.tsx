@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { addMonths, differenceInCalendarDays, format, startOfDay } from 'date-fns';
+import { addDays, addMonths, differenceInCalendarDays, format, startOfDay } from 'date-fns';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Circle, CircleAlert, CarFront } from 'lucide-react';
 import { useSession } from 'next-auth/react';
@@ -209,6 +209,7 @@ export default function OneDayPass() {
     [selectedDate]
   );
   const today = useMemo(() => startOfDay(new Date()), []);
+  const yesterday = useMemo(() => addDays(today, -1), [today]);
   const calendarStartMonth = useMemo(() => new Date(today.getFullYear() - 5, 0, 1), [today]);
   const calendarEndMonth = useMemo(() => new Date(today.getFullYear() + 15, 11, 31), [today]);
   const lastNavigableMonth = useMemo(
@@ -235,7 +236,7 @@ export default function OneDayPass() {
     () => (selectedJourneyDate ? differenceInCalendarDays(selectedJourneyDate, today) : null),
     [selectedJourneyDate, today]
   );
-  const hasLateFee = daysFromToday !== null && daysFromToday >= 0 && daysFromToday <= 1;
+  const hasLateFee = daysFromToday !== null && daysFromToday < 0;
   const lateFeeAmount = hasLateFee ? configuredLateFee : 0;
   const basePriceValue = activeJourney?.priceValue ?? 0;
   const totalDueValue = basePriceValue + lateFeeAmount;
@@ -476,7 +477,7 @@ export default function OneDayPass() {
                   hideNavigation
                   startMonth={calendarStartMonth}
                   endMonth={calendarEndMonth}
-                  disabled={{ before: today }}
+                  disabled={{ before: yesterday }}
                   weekStartsOn={6}
                   onSelect={(date) => {
                     if (!date) {
