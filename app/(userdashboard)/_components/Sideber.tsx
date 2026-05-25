@@ -10,6 +10,7 @@ import {
   ClipboardList,
   ShoppingBasket,
   Settings,
+  Trophy,
   Menu,
   X,
   LogOut,
@@ -38,6 +39,11 @@ const navigation = [
     name: "Subscription",
     href: "/dashboard/subscription",
     icon: ShoppingBasket,
+  },
+  {
+    name: "Past Winner",
+    href: "/dashboard/past-winner",
+    icon: Trophy,
   },
   {
     name: "Settings",
