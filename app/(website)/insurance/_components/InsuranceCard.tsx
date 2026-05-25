@@ -8,7 +8,10 @@ interface InsuranceCardProps {
   features: string[];
   memberRate: string;
   saveText?: string;
+  detailsUrl?: string;
 }
+
+const isHttpUrl = (value: string) => /^https?:\/\//i.test(value);
 
 export default function InsuranceCard({
   id,
@@ -17,7 +20,15 @@ export default function InsuranceCard({
   features,
   memberRate,
   saveText = "Save 20%",
+  detailsUrl,
 }: InsuranceCardProps) {
+  const normalizedDetailsUrl = detailsUrl?.trim();
+  const hasExternalDetailsUrl =
+    typeof normalizedDetailsUrl === "string" && isHttpUrl(normalizedDetailsUrl);
+  const detailsHref = hasExternalDetailsUrl
+    ? normalizedDetailsUrl
+    : `/insurance-details/${id}`;
+
   return (
     <div className="relative h-full transform overflow-hidden rounded-xl bg-white p-6 shadow-lg transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl">
       {/* Save Badge */}
@@ -59,7 +70,9 @@ export default function InsuranceCard({
         <div className="mt-auto flex items-center justify-between pt-4">
           <span className="text-lg font-medium text-[#004EB0]">{memberRate}</span>
           <Link
-            href={`/insurance-details/${id}`}
+            href={detailsHref}
+            target={hasExternalDetailsUrl ? "_blank" : undefined}
+            rel={hasExternalDetailsUrl ? "noopener noreferrer" : undefined}
             className="montserrat inline-flex h-12 cursor-pointer items-center rounded-md bg-[#004EB0] px-6 text-sm font-medium text-white transition hover:bg-[#004EB0]/90"
           >
             View Details

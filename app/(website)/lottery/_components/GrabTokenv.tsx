@@ -12,7 +12,7 @@ export default function GrabToken() {
   const token = session.data?.accessToken;
  
   
-  const tokenPrice = 15;
+  const tokenPrice = 5;
 
   const handleIncrease = () => setTokenCount((prev) => prev + 1);
   const handleDecrease = () =>

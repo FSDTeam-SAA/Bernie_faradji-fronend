@@ -24,6 +24,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import LogoutConfirmationModal from "@/components/common/LogoutConfirmationModal";
 
 type NavItem = {
   label: string;
@@ -76,6 +77,7 @@ export default function Navbar() {
     []
   );
   const [failedAvatarSrc, setFailedAvatarSrc] = useState<string | null>(null);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const user = session?.user;
   const accessToken = session?.accessToken;
@@ -112,6 +114,14 @@ export default function Navbar() {
   }, [apiBaseUrl, rawAvatarSrc]);
   const avatarInitials = getInitials(user?.name);
   const showAvatarImage = Boolean(avatarSrc) && failedAvatarSrc !== avatarSrc;
+
+  const openLogoutConfirmation = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const confirmLogout = async () => {
+    await signOut({ callbackUrl: "/" });
+  };
 
   return (
     <header className="fixed left-0 top-0 z-50 w-full px-3 pt-4 md:px-5">
@@ -201,7 +211,7 @@ export default function Navbar() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => signOut({ callbackUrl: "/" })}
+                    onSelect={openLogoutConfirmation}
                     className="cursor-pointer text-red-600 focus:text-red-600 flex items-center gap-2"
                   >
                     <LogOut className="size-4" />
@@ -286,7 +296,7 @@ export default function Navbar() {
 
                     <SheetClose asChild>
                       <Button
-                        onClick={() => signOut({ callbackUrl: "/" })}
+                        onClick={openLogoutConfirmation}
                         variant="destructive"
                         className="h-11 w-full gap-2 rounded-full"
                       >
@@ -301,6 +311,13 @@ export default function Navbar() {
           </Sheet>
         </nav>
       </div>
+
+      <LogoutConfirmationModal
+        open={isLogoutModalOpen}
+        onOpenChange={setIsLogoutModalOpen}
+        onConfirm={confirmLogout}
+        callbackUrlLabel="home page"
+      />
     </header>
   );
 }

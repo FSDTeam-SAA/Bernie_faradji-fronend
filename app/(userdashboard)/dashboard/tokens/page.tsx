@@ -309,7 +309,7 @@ export default function TokensPage() {
         <Table className="min-w-[900px] rounded-lg bg-white shadow">
           <TableHeader className="bg-[#E0EEFF]">
             <TableRow>
-              <TableHead className="text-center text-xs sm:text-sm">Token Price</TableHead>
+              <TableHead className="text-center text-xs sm:text-sm">Token per Price</TableHead>
               <TableHead className="text-center text-xs sm:text-sm">
                 Token Quantity
               </TableHead>

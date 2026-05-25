@@ -9,6 +9,7 @@ interface InsuranceApiItem {
   shortDetails?: string;
   rate?: number;
   savingUpTo?: number;
+  url?: string;
 }
 
 // Skeleton Component
@@ -93,6 +94,7 @@ export default function InsuranceListing() {
                   // Map features if you have them in API, otherwise keep empty or add defaults
                   features={["No-claims bonus protection", "24/7 Central London recovery"]}
                   memberRate={`£${Number(item.rate ?? 0).toFixed(2)}/mo`}
+                  detailsUrl={item.url}
                   saveText={
                     typeof item.savingUpTo === "number"
                       ? `Save ${item.savingUpTo}%`
