@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   HandCoins,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
+import LogoutConfirmationModal from "@/components/common/LogoutConfirmationModal";
 
 const navigation = [
   {
@@ -47,9 +49,19 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const openLogoutConfirmation = () => {
+    setIsMobileMenuOpen(false);
+    setIsLogoutModalOpen(true);
+  };
+
+  const confirmLogout = async () => {
+    await signOut({ callbackUrl: "/" });
   };
 
   return (
@@ -147,12 +159,23 @@ export function Sidebar() {
 
         {/* Logout */}
         <div className="px-4 pb-6">
-          <button className="flex w-full items-center cursor-pointer gap-3 border border-red-500 rounded-[4px] px-4 py-3 text-red-500 hover:bg-red-50 transition-all duration-200">
+          <button
+            type="button"
+            onClick={openLogoutConfirmation}
+            className="flex w-full cursor-pointer items-center gap-3 rounded-[4px] border border-red-500 px-4 py-3 text-red-500 transition-all duration-200 hover:bg-red-50"
+          >
             <LogOut className="h-5 w-5" />
             <span className="text-[15px] font-medium ">Log Out</span>
           </button>
         </div>
       </div>
+
+      <LogoutConfirmationModal
+        open={isLogoutModalOpen}
+        onOpenChange={setIsLogoutModalOpen}
+        onConfirm={confirmLogout}
+        callbackUrlLabel="home page"
+      />
     </>
   );
 }

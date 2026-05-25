@@ -27,6 +27,8 @@ interface MembershipData {
   _id: string;
   planId?: MembershipPlan | null;
   startDate?: string;
+  createdAt?: string;
+  endDate?: string;
   status?: string;
 }
 
@@ -47,7 +49,9 @@ interface SubscriptionRow {
   id: string;
   planName: string;
   price: string;
-  date: string;
+  startDate: string;
+  endDate: string;
+  purchaseDate: string;
   status: SubscriptionStatus;
 }
 
@@ -153,7 +157,9 @@ export default function SubscriptionPage() {
         id: membership._id,
         planName: billingCycle ? `${planName} (${billingCycle})` : planName,
         price: gbpFormatter.format(membership.planId?.price ?? 0),
-        date: formatDate(membership.startDate),
+        startDate: formatDate(membership.startDate),
+        endDate: formatDate(membership.endDate),
+        purchaseDate: formatDate(membership.createdAt),
         status: getStatus(membership.status),
       },
     ];
@@ -209,12 +215,14 @@ export default function SubscriptionPage() {
           </div>
         )}
 
-        <Table className="min-w-[640px] rounded-lg bg-white shadow">
+        <Table className="min-w-[920px] rounded-lg bg-white shadow">
           <TableHeader className="bg-[#E0EEFF]">
             <TableRow>
               <TableHead className="text-center text-xs sm:text-sm">Plan Name</TableHead>
               <TableHead className="text-center text-xs sm:text-sm">Price</TableHead>
-              <TableHead className="text-center text-xs sm:text-sm">Date</TableHead>
+              <TableHead className="text-center text-xs sm:text-sm">Start Date</TableHead>
+              <TableHead className="text-center text-xs sm:text-sm">End Date</TableHead>
+              <TableHead className="text-center text-xs sm:text-sm">Purchase Date</TableHead>
               <TableHead className="text-center text-xs sm:text-sm">Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -226,7 +234,9 @@ export default function SubscriptionPage() {
                     {subscription.planName}
                   </TableCell>
                   <TableCell className="py-4 text-center">{subscription.price}</TableCell>
-                  <TableCell className="py-4 text-center">{subscription.date}</TableCell>
+                  <TableCell className="py-4 text-center">{subscription.startDate}</TableCell>
+                  <TableCell className="py-4 text-center">{subscription.endDate}</TableCell>
+                  <TableCell className="py-4 text-center">{subscription.purchaseDate}</TableCell>
                   <TableCell className="py-4 text-center">
                     <Badge
                       variant={getBadgeVariant(subscription.status)}
@@ -239,7 +249,7 @@ export default function SubscriptionPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell className="py-6 text-center text-slate-500" colSpan={4}>
+                <TableCell className="py-6 text-center text-slate-500" colSpan={6}>
                   No subscription data found.
                 </TableCell>
               </TableRow>
