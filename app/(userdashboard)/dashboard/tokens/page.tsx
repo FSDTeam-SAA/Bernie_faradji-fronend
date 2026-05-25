@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
+import { Eye } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Pagination } from "@/components/common/Pagination";
 import TokensPageSkeleton from "../../_components/TokensPageSkeleton";
+import { TokenDetailsModal, type TokenDetailsData } from "./_components/TokenDetailsModal";
 
 interface WinnerUser {
   name?: string;
@@ -39,8 +41,10 @@ interface TokenItem {
   _id: string;
   tokenPrice?: number;
   totalPrice?: number;
+  quantity?: number;
   createdAt?: string;
   vehicleNumber?: string;
+  ticketCodes?: string[];
 }
 
 interface MyTokensResponse {
@@ -68,9 +72,11 @@ interface SessionWithFallbackToken {
 interface TokenTableRow {
   id: string;
   token: string;
+  quantity: number;
   amount: string;
   date: string;
   vehicle: string;
+  modalData: TokenDetailsData;
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -89,6 +95,21 @@ const formatDate = (dateString?: string): string => {
   if (Number.isNaN(parsedDate.getTime())) return "--";
 
   return parsedDate.toLocaleDateString("en-GB");
+};
+
+const formatDateTime = (dateString?: string): string => {
+  if (!dateString) return "--";
+
+  const parsedDate = new Date(dateString);
+  if (Number.isNaN(parsedDate.getTime())) return "--";
+
+  const date = parsedDate.toLocaleDateString("en-GB");
+  const time = parsedDate.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return `${date}, ${time}`;
 };
 
 const getApiBaseUrl = (): string => {
@@ -152,6 +173,8 @@ const fetchMyTokens = async (token: string, page: number): Promise<MyTokensRespo
 export default function TokensPage() {
   const { data: session, status: sessionStatus } = useSession();
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<TokenDetailsData | null>(null);
 
   const accessToken =
     session?.accessToken ??
@@ -187,9 +210,19 @@ export default function TokensPage() {
     return tokens.map((token) => ({
       id: token._id,
       token: gbpFormatter.format(token.tokenPrice ?? 0),
+      quantity: token.quantity ?? token.ticketCodes?.length ?? 0,
       amount: gbpFormatter.format(token.totalPrice ?? 0),
       date: formatDate(token.createdAt),
       vehicle: token.vehicleNumber ?? "--",
+      modalData: {
+        tokenId: token._id,
+        vehicleNumber: token.vehicleNumber ?? "--",
+        quantity: token.quantity ?? token.ticketCodes?.length ?? 0,
+        tokenPrice: gbpFormatter.format(token.tokenPrice ?? 0),
+        totalAmount: gbpFormatter.format(token.totalPrice ?? 0),
+        purchaseDateTime: formatDateTime(token.createdAt),
+        ticketCodes: token.ticketCodes ?? [],
+      },
     }));
   }, [myTokensResponse]);
 
@@ -201,6 +234,11 @@ export default function TokensPage() {
   }, [myTokensResponse]);
 
   const activePage = Math.min(currentPage, totalPages);
+
+  const handleOpenModal = (token: TokenTableRow) => {
+    setSelectedToken(token.modalData);
+    setIsDetailsOpen(true);
+  };
 
   const winnerData = winnerResponse?.data ?? myTokensResponse?.data?.winner;
   const winnerName = winnerData?.userId?.name?.trim();
@@ -268,10 +306,13 @@ export default function TokensPage() {
           Swipe left/right to see full table.
         </p>
 
-        <Table className="min-w-[680px] rounded-lg bg-white shadow">
+        <Table className="min-w-[900px] rounded-lg bg-white shadow">
           <TableHeader className="bg-[#E0EEFF]">
             <TableRow>
-              <TableHead className="text-center text-xs sm:text-sm">Token</TableHead>
+              <TableHead className="text-center text-xs sm:text-sm">Token Price</TableHead>
+              <TableHead className="text-center text-xs sm:text-sm">
+                Token Quantity
+              </TableHead>
               <TableHead className="text-center text-xs sm:text-sm">
                 Total Amount
               </TableHead>
@@ -279,6 +320,7 @@ export default function TokensPage() {
               <TableHead className="text-center text-xs sm:text-sm">
                 Vehicle Registration Number
               </TableHead>
+              <TableHead className="text-center text-xs sm:text-sm">Action</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -289,14 +331,25 @@ export default function TokensPage() {
                   <TableCell className="py-4 text-center font-bold">
                     {token.token}
                   </TableCell>
+                  <TableCell className="text-center">{token.quantity}</TableCell>
                   <TableCell className="text-center">{token.amount}</TableCell>
                   <TableCell className="text-center">{token.date}</TableCell>
                   <TableCell className="text-center">{token.vehicle}</TableCell>
+                  <TableCell className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenModal(token)}
+                      className="cursor-pointer rounded-md p-2 text-[#033D86] hover:bg-[#E0EEFF]"
+                      aria-label={`View details for token ${token.id}`}
+                    >
+                      <Eye size={18} />
+                    </button>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell className="py-6 text-center text-slate-500" colSpan={4}>
+                <TableCell className="py-6 text-center text-slate-500" colSpan={6}>
                   No token data found.
                 </TableCell>
               </TableRow>
@@ -312,6 +365,15 @@ export default function TokensPage() {
           />
         )}
       </div>
+
+      <TokenDetailsModal
+        open={isDetailsOpen}
+        onClose={() => {
+          setIsDetailsOpen(false);
+          setSelectedToken(null);
+        }}
+        data={selectedToken}
+      />
     </div>
   );
 }

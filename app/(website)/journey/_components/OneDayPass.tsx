@@ -1,9 +1,9 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { differenceInCalendarDays, format, startOfDay } from 'date-fns';
+import { addMonths, differenceInCalendarDays, format, startOfDay } from 'date-fns';
 import { motion } from 'framer-motion';
-import { CircleAlert, CarFront, Circle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Circle, CircleAlert, CarFront } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -167,6 +167,7 @@ export default function OneDayPass() {
   const [selectedJourney, setSelectedJourney] = useState<string | null>(null);
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => startOfDay(new Date()));
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
 
@@ -208,6 +209,21 @@ export default function OneDayPass() {
     [selectedDate]
   );
   const today = useMemo(() => startOfDay(new Date()), []);
+  const calendarStartMonth = useMemo(() => new Date(today.getFullYear() - 5, 0, 1), [today]);
+  const calendarEndMonth = useMemo(() => new Date(today.getFullYear() + 15, 11, 31), [today]);
+  const lastNavigableMonth = useMemo(
+    () => new Date(calendarEndMonth.getFullYear(), calendarEndMonth.getMonth(), 1),
+    [calendarEndMonth]
+  );
+  const monthLabels = useMemo(
+    () => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    []
+  );
+  const yearOptions = useMemo(() => {
+    const startYear = calendarStartMonth.getFullYear();
+    const endYear = calendarEndMonth.getFullYear();
+    return Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index);
+  }, [calendarEndMonth, calendarStartMonth]);
   const normalizedVehicleNumber = vehicleNumber.trim().replace(/\s+/g, ' ');
   const isVehicleNumberValid = isValidVehicleNumber(normalizedVehicleNumber);
   const shouldShowVehicleNumberError = vehicleNumber.trim().length > 0 && !isVehicleNumberValid;
@@ -321,6 +337,26 @@ export default function OneDayPass() {
     };
   }, [isCalendarOpen]);
 
+  const previousMonth = addMonths(calendarMonth, -1);
+  const nextMonth = addMonths(calendarMonth, 1);
+  const isPreviousDisabled = previousMonth < calendarStartMonth;
+  const isNextDisabled = nextMonth > lastNavigableMonth;
+
+  const handleMonthSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextMonthValue = Number(event.target.value);
+    setCalendarMonth(new Date(calendarMonth.getFullYear(), nextMonthValue, 1));
+  };
+
+  const handleYearSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextYearValue = Number(event.target.value);
+    setCalendarMonth(new Date(nextYearValue, calendarMonth.getMonth(), 1));
+  };
+
+  const openCalendar = () => {
+    setCalendarMonth(startOfDay(selectedDate ?? today));
+    setIsCalendarOpen(true);
+  };
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
       <motion.section
@@ -373,8 +409,8 @@ export default function OneDayPass() {
               value={formattedDate}
               placeholder="DD/MM/YY"
               readOnly
-              onClick={() => setIsCalendarOpen(true)}
-              onFocus={() => setIsCalendarOpen(true)}
+              onClick={openCalendar}
+              onFocus={openCalendar}
               className="montserrat mt-1.5 h-11 w-full cursor-pointer rounded-[8px] border border-[#D8E2F1] bg-[#F7F9FB] px-3 text-[15px] text-[#5d5959] outline-none transition-all placeholder:text-[#A1ACBC] focus:border-[#0A4EA5]/55 focus:bg-white sm:h-12 sm:text-[16px]"
             />
           </div>
@@ -382,11 +418,64 @@ export default function OneDayPass() {
           <div ref={datePickerRef}>
             <p className="montserrat text-[13px] text-[#0B4FA8] sm:text-[14px]">Select a Date</p>
             {isCalendarOpen && (
-              <div className="mt-2 w-full max-w-[260px] rounded-[8px] border border-[#E4EAF4] bg-white p-2 shadow-[0_10px_20px_rgba(10,78,165,0.1)]">
+              <div className="mt-2 w-full max-w-[320px] rounded-[10px] border border-[#E4EAF4] bg-white p-3 shadow-[0_12px_26px_rgba(10,78,165,0.12)]">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCalendarMonth(previousMonth)}
+                    disabled={isPreviousDisabled}
+                    aria-label="Previous month"
+                    className="flex size-8 items-center justify-center rounded-[8px] border border-[#DDE7F4] bg-white text-[#0A4EA5] transition-colors hover:bg-[#EDF4FD] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft className="size-4" />
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={calendarMonth.getMonth()}
+                      onChange={handleMonthSelectChange}
+                      className="montserrat h-8 rounded-[7px] border border-[#D8E2F1] bg-white px-2 text-[14px] font-semibold text-[#0B4FA8] outline-none focus:border-[#0A4EA5]/50"
+                    >
+                      {monthLabels.map((monthLabel, index) => (
+                        <option key={monthLabel} value={index}>
+                          {monthLabel}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={calendarMonth.getFullYear()}
+                      onChange={handleYearSelectChange}
+                      className="montserrat h-8 rounded-[7px] border border-[#D8E2F1] bg-white px-2 text-[14px] font-semibold text-[#0B4FA8] outline-none focus:border-[#0A4EA5]/50"
+                    >
+                      {yearOptions.map((yearOption) => (
+                        <option key={yearOption} value={yearOption}>
+                          {yearOption}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setCalendarMonth(nextMonth)}
+                    disabled={isNextDisabled}
+                    aria-label="Next month"
+                    className="flex size-8 items-center justify-center rounded-[8px] border border-[#DDE7F4] bg-white text-[#0A4EA5] transition-colors hover:bg-[#EDF4FD] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronRight className="size-4" />
+                  </button>
+                </div>
+
                 <Calendar
                   mode="single"
                   selected={selectedDate}
+                  month={calendarMonth}
+                  onMonthChange={setCalendarMonth}
                   defaultMonth={selectedDate ?? today}
+                  hideNavigation
+                  startMonth={calendarStartMonth}
+                  endMonth={calendarEndMonth}
                   disabled={{ before: today }}
                   weekStartsOn={6}
                   onSelect={(date) => {
@@ -398,9 +487,15 @@ export default function OneDayPass() {
                     setIsCalendarOpen(false);
                   }}
                   classNames={{
-                    day: 'size-6 rounded-[3px] bg-[#EAF2FB] p-0 text-[#5278A6] transition-none hover:bg-[#EAF2FB] hover:text-[#5278A6]',
+                    month_caption: 'hidden',
+                    nav: 'hidden',
+                    weekdays: 'mt-1 grid grid-cols-7 gap-1',
+                    weekday: 'text-center text-[12px] font-medium text-[#6F7A8B]',
+                    weeks: 'mt-1 flex flex-col gap-1',
+                    week: 'grid grid-cols-7 gap-1',
+                    day: 'size-9 rounded-[7px] bg-[#EAF2FB] p-0 text-[#5278A6] transition-none hover:bg-[#EAF2FB] hover:text-[#5278A6]',
                     day_button:
-                      'size-6 cursor-pointer rounded-[3px] border-0 bg-transparent p-0 text-[10px] font-semibold transition-none hover:bg-transparent hover:text-inherit focus:bg-transparent focus:text-inherit',
+                      'size-9 cursor-pointer rounded-[7px] border-0 bg-transparent p-0 text-[15px] font-semibold transition-none hover:bg-transparent hover:text-inherit focus:bg-transparent focus:text-inherit',
                     selected:
                       '!bg-[#0A4EA5] !text-white hover:!bg-[#0A4EA5] hover:!text-white [&>button]:!text-white [&>button:hover]:!bg-transparent [&>button:hover]:!text-white',
                     today:
@@ -522,7 +617,7 @@ export default function OneDayPass() {
         </div>
 
         <div className="relative mt-5 rounded-[10px] border border-[#D7E4F4] bg-white p-4">
-          <div className="montserrat flex items-start justify-between gap-4 text-[14px] text-[#5B6B82]">
+          <div className="montserrat flex items-start justify-between gap-4 text-[13px] text-[#5B6B82]">
             <span>Selected pass</span>
             <span className="max-w-[180px] text-right font-semibold text-[#143D73]">{summaryTitle} (1 Day)</span>
           </div>

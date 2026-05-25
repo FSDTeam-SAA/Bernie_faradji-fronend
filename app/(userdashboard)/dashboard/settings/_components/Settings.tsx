@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Camera, CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserAddress {
   country: string;
@@ -65,13 +66,30 @@ interface PasswordFormState {
   confirmPassword: string;
 }
 
+interface SessionWithFallbackToken {
+  accessToken?: string;
+  user?: {
+    accessToken?: string;
+  };
+}
+
 const emptyPasswordForm: PasswordFormState = {
   oldPassword: "",
   newPassword: "",
   confirmPassword: "",
 };
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+const getApiBaseUrl = (): string => {
+  const apiBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_API_URL;
+
+  if (!apiBaseUrl) {
+    throw new Error("API base URL is not configured");
+  }
+
+  return apiBaseUrl.replace(/\/+$/, "");
+};
 
 const readJsonResponse = async <T,>(res: Response): Promise<T> => {
   const text = await res.text();
@@ -95,10 +113,14 @@ export default function Settings(): React.JSX.Element {
   const [profileData, setProfileData] = useState<ProfileFormState | null>(null);
   const [passwordData, setPasswordData] =
     useState<PasswordFormState>(emptyPasswordForm);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState("");
 
   const queryClient = useQueryClient();
   const { data: session, status } = useSession();
-  const accessToken = session?.accessToken;
+  const accessToken =
+    session?.accessToken ??
+    (session as SessionWithFallbackToken | null)?.user?.accessToken;
 
   const authHeaders = useMemo(
     () => ({
@@ -112,7 +134,7 @@ export default function Settings(): React.JSX.Element {
     queryKey: ["user-profile"],
     enabled: status === "authenticated" && Boolean(accessToken),
     queryFn: async () => {
-      const res = await fetch(`${apiBaseUrl}/user/me`, {
+      const res = await fetch(`${getApiBaseUrl()}/user/me`, {
         headers: authHeaders,
       });
       const response = await readJsonResponse<ProfileResponse>(res);
@@ -138,19 +160,25 @@ export default function Settings(): React.JSX.Element {
 
   const resolvedProfileData = profileData ?? profileDefaults;
 
-  const updateProfileField = (
-    field: keyof ProfileFormState,
-    value: string,
-  ) => {
+  const updateProfileField = (field: keyof ProfileFormState, value: string) => {
     setProfileData((current) => ({
       ...(current ?? profileDefaults),
       [field]: value,
     }));
   };
 
+  useEffect(
+    () => () => {
+      if (profileImagePreview) {
+        URL.revokeObjectURL(profileImagePreview);
+      }
+    },
+    [profileImagePreview],
+  );
+
   const updateProfileMutation = useMutation({
     mutationFn: async (body: { name: string; gender?: string }) => {
-      const res = await fetch(`${apiBaseUrl}/user/me`, {
+      const res = await fetch(`${getApiBaseUrl()}/user/me`, {
         method: "PUT",
         headers: authHeaders,
         body: JSON.stringify(body),
@@ -165,7 +193,6 @@ export default function Settings(): React.JSX.Element {
     },
     onSuccess: async () => {
       toast.success("Profile updated successfully");
-      setProfileData(null);
       await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -173,7 +200,7 @@ export default function Settings(): React.JSX.Element {
 
   const changePasswordMutation = useMutation({
     mutationFn: async (body: { oldPassword: string; newPassword: string }) => {
-      const res = await fetch(`${apiBaseUrl}/auth/change-password`, {
+      const res = await fetch(`${getApiBaseUrl()}/auth/change-password`, {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify(body),
@@ -197,7 +224,69 @@ export default function Settings(): React.JSX.Element {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const handleProfileSubmit = () => {
+  const uploadProfileImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("profileImage", file);
+
+      const res = await fetch(`${getApiBaseUrl()}/user/upload-avatar`, {
+        method: userProfile?.profileImage ? "PUT" : "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
+      const response = await readJsonResponse<ProfileResponse>(res);
+
+      if (!res.ok || response.status === false || response.success === false) {
+        throw new Error(response.message || "Failed to upload profile image");
+      }
+
+      return response;
+    },
+    onSuccess: async () => {
+      toast.success("Profile image updated successfully");
+      setProfileImageFile(null);
+      setProfileImagePreview((current) => {
+        if (current) {
+          URL.revokeObjectURL(current);
+        }
+        return "";
+      });
+      await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const clearSelectedProfileImage = () => {
+    setProfileImageFile(null);
+    setProfileImagePreview((current) => {
+      if (current) {
+        URL.revokeObjectURL(current);
+      }
+      return "";
+    });
+  };
+
+  const handleProfileImageChange = (file?: File | null) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setProfileImageFile(file);
+    setProfileImagePreview((current) => {
+      if (current) {
+        URL.revokeObjectURL(current);
+      }
+      return objectUrl;
+    });
+  };
+
+  const handleProfileSubmit = async () => {
     const name = resolvedProfileData.name.trim();
     const gender = resolvedProfileData.gender.trim();
 
@@ -206,10 +295,18 @@ export default function Settings(): React.JSX.Element {
       return;
     }
 
-    updateProfileMutation.mutate({
-      name,
-      ...(gender ? { gender } : {}),
-    });
+    try {
+      await updateProfileMutation.mutateAsync({
+        name,
+        ...(gender ? { gender } : {}),
+      });
+
+      if (profileImageFile) {
+        await uploadProfileImageMutation.mutateAsync(profileImageFile);
+      }
+    } catch {
+      // Mutation callbacks already show the API error toast.
+    }
   };
 
   const handlePasswordSubmit = () => {
@@ -231,7 +328,7 @@ export default function Settings(): React.JSX.Element {
 
   const handleSave = () => {
     if (activeTab === "profile") {
-      handleProfileSubmit();
+      void handleProfileSubmit();
       return;
     }
 
@@ -241,6 +338,7 @@ export default function Settings(): React.JSX.Element {
   const handleDiscard = () => {
     if (activeTab === "profile") {
       setProfileData(null);
+      clearSelectedProfileImage();
       return;
     }
 
@@ -248,10 +346,33 @@ export default function Settings(): React.JSX.Element {
   };
 
   const isSaving =
-    updateProfileMutation.isPending || changePasswordMutation.isPending;
+    updateProfileMutation.isPending ||
+    uploadProfileImageMutation.isPending ||
+    changePasswordMutation.isPending;
   const displayName = resolvedProfileData.name || "User";
-  const displayEmail = resolvedProfileData.email;
-  const profileImage = userProfile?.profileImage || "";
+  const displayEmail = resolvedProfileData.email || "";
+  const profileImage = profileImagePreview || userProfile?.profileImage || "";
+
+  if (status === "loading" || profileQuery.isLoading) {
+    return <SettingsPageSkeleton />;
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="w-full rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-700">
+        Please log in to update your settings.
+      </div>
+    );
+  }
+
+  if (status === "authenticated" && !accessToken) {
+    return (
+      <div className="w-full rounded-lg border border-red-200 bg-red-50 p-4 text-red-600">
+        Login session found, but access token is missing. Please log out and log in
+        again.
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen font-sans antialiased text-[#1e293b]">
@@ -290,22 +411,44 @@ export default function Settings(): React.JSX.Element {
               profileImage ? { backgroundImage: `url(${profileImage})` } : {}
             }
           >
-            {!profileImage ? (
+            {profileQuery.isLoading ? (
+              <Skeleton className="h-full w-full rounded-full" />
+            ) : !profileImage ? (
               <div className="flex h-full w-full items-center justify-center bg-[#e6f0fa] text-3xl font-bold text-[#0052cc]">
                 {getInitials(displayName)}
               </div>
+            ) : null}
+            {activeTab === "profile" && !profileQuery.isLoading ? (
+              <label className="absolute inset-x-0 bottom-0 flex h-9 cursor-pointer items-center justify-center bg-slate-950/65 text-white transition hover:bg-slate-950/75">
+                <Camera className="h-4 w-4" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(event) => {
+                    handleProfileImageChange(event.target.files?.[0] || null);
+                    event.target.value = "";
+                  }}
+                />
+              </label>
             ) : null}
           </div>
 
           <div className="text-center space-y-3 mt-2">
             <h1 className="text-3xl font-serif font-bold text-[#1a253c] tracking-wide flex items-center justify-center gap-1.5">
-              {profileQuery.isLoading ? "Loading..." : displayName}
+              {profileQuery.isLoading ? (
+                <Skeleton className="h-9 w-48" />
+              ) : (
+                displayName
+              )}
               {userProfile?.isVerified ? (
                 <CheckCircle2 className="w-5 h-5 text-[#0052cc] fill-[#0052cc] stroke-white stroke-[2.5]" />
               ) : null}
             </h1>
 
-            {displayEmail ? (
+            {profileQuery.isLoading ? (
+              <Skeleton className="mx-auto h-4 w-56" />
+            ) : displayEmail ? (
               <p className="text-sm font-medium text-slate-400">
                 {displayEmail}
               </p>
@@ -315,9 +458,7 @@ export default function Settings(): React.JSX.Element {
 
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-8">
           {profileQuery.isLoading ? (
-            <div className="flex items-center justify-center py-16 text-[#0052cc]">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
+            <SettingsFormSkeleton />
           ) : profileQuery.isError ? (
             <div className="rounded-lg border border-red-100 bg-red-50 py-10 text-center text-sm font-medium text-red-500">
               {profileQuery.error instanceof Error
@@ -330,6 +471,8 @@ export default function Settings(): React.JSX.Element {
                 Personal Information
               </h3>
 
+             
+
               <div className="space-y-4">
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-bold text-slate-500">
@@ -338,9 +481,7 @@ export default function Settings(): React.JSX.Element {
                   <input
                     type="text"
                     value={resolvedProfileData.name}
-                    onChange={(event) =>
-                      updateProfileField("name", event.target.value)
-                    }
+                    onChange={(event) => updateProfileField("name", event.target.value)}
                     className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                   />
                 </div>
@@ -386,12 +527,12 @@ export default function Settings(): React.JSX.Element {
               </div>
             </div>
           ) : (
-            <div className="space-y-6 p-6">
+            <div className="space-y-6">
               <h3 className="text-lg font-bold text-[#1a253c] tracking-tight">
                 Password Settings
               </h3>
 
-              <div className="space-y-4 ">
+              <div className="space-y-4">
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-bold text-slate-500">
                     Old Password
@@ -492,7 +633,7 @@ export default function Settings(): React.JSX.Element {
             </div>
           )}
 
-          <div className="flex justify-end gap-4 pt-8 mt-4 border-t border-slate-50 p-6">
+          <div className="flex justify-end gap-4 pt-8 mt-4 border-t border-slate-50">
             <button
               type="button"
               onClick={handleDiscard}
@@ -513,6 +654,62 @@ export default function Settings(): React.JSX.Element {
               {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsFormSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-6 w-48" />
+      <div className="space-y-4">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-12 w-full rounded-[12px]" />
+        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div key={index} className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-12 w-full rounded-[12px]" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex justify-end gap-4 border-t border-slate-50 pt-8">
+        <Skeleton className="h-10 w-32 rounded-[12px]" />
+        <Skeleton className="h-10 w-32 rounded-[12px]" />
+      </div>
+    </div>
+  );
+}
+
+function SettingsPageSkeleton() {
+  return (
+    <div className="w-full min-h-screen font-sans antialiased text-[#1e293b]">
+      <div className="mx-auto max-w-[1400px] space-y-6">
+        <div className="flex w-full items-center rounded-xl border border-slate-200 bg-white p-1.5">
+          <Skeleton className="h-10 flex-1 rounded-[12px]" />
+          <Skeleton className="ml-1.5 h-10 flex-1 rounded-[12px]" />
+        </div>
+
+        <div className="relative flex flex-col items-center overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 pb-8 shadow-sm">
+          <Skeleton className="mb-16 h-44 w-full rounded-xl" />
+
+          <div className="absolute top-32 h-28 w-28 overflow-hidden rounded-full border-4 border-white bg-slate-200 shadow-md">
+            <Skeleton className="h-full w-full rounded-full" />
+          </div>
+
+          <div className="mt-2 space-y-3 text-center">
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="mx-auto h-4 w-56" />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm">
+          <SettingsFormSkeleton />
         </div>
       </div>
     </div>

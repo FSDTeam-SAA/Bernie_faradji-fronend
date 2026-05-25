@@ -1,11 +1,11 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { format, startOfDay } from 'date-fns';
+import { addMonths, format, startOfDay } from 'date-fns';
 import { motion } from 'framer-motion';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -147,7 +147,23 @@ export default function SubscriptionPlans() {
   const { data: session, status: sessionStatus } = useSession();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanApiItem | null>(null);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | undefined>();
-  const today = startOfDay(new Date());
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => startOfDay(new Date()));
+  const today = useMemo(() => startOfDay(new Date()), []);
+  const calendarStartMonth = useMemo(() => new Date(today.getFullYear() - 5, 0, 1), [today]);
+  const calendarEndMonth = useMemo(() => new Date(today.getFullYear() + 15, 11, 31), [today]);
+  const lastNavigableMonth = useMemo(
+    () => new Date(calendarEndMonth.getFullYear(), calendarEndMonth.getMonth(), 1),
+    [calendarEndMonth]
+  );
+  const monthLabels = useMemo(
+    () => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    []
+  );
+  const yearOptions = useMemo(() => {
+    const startYear = calendarStartMonth.getFullYear();
+    const endYear = calendarEndMonth.getFullYear();
+    return Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index);
+  }, [calendarEndMonth, calendarStartMonth]);
 
   const {
     data: subscriptionPlans = [],
@@ -198,6 +214,7 @@ export default function SubscriptionPlans() {
   const handleOpenSubscribeModal = (plan: SubscriptionPlanApiItem) => {
     setSelectedPlan(plan);
     setSelectedStartDate(undefined);
+    setCalendarMonth(today);
   };
 
   const handleModalOpenChange = (open: boolean) => {
@@ -227,6 +244,21 @@ export default function SubscriptionPlans() {
       planId: selectedPlan._id,
       startDate: format(selectedStartDate, 'yyyy-MM-dd'),
     });
+  };
+
+  const previousMonth = addMonths(calendarMonth, -1);
+  const nextMonth = addMonths(calendarMonth, 1);
+  const isPreviousDisabled = previousMonth < calendarStartMonth;
+  const isNextDisabled = nextMonth > lastNavigableMonth;
+
+  const handleMonthSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextMonthValue = Number(event.target.value);
+    setCalendarMonth(new Date(calendarMonth.getFullYear(), nextMonthValue, 1));
+  };
+
+  const handleYearSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextYearValue = Number(event.target.value);
+    setCalendarMonth(new Date(nextYearValue, calendarMonth.getMonth(), 1));
   };
 
   return (
@@ -316,11 +348,63 @@ export default function SubscriptionPlans() {
                 </div>
               </div>
 
-              <div className="mt-4 rounded-[10px] border border-[#E4EAF4] bg-white p-3 shadow-[0_10px_20px_rgba(10,78,165,0.08)]">
+              <div className="mt-4 rounded-[10px] border border-[#E4EAF4] bg-white p-3 shadow-[0_12px_26px_rgba(10,78,165,0.12)]">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCalendarMonth(previousMonth)}
+                    disabled={isPreviousDisabled}
+                    aria-label="Previous month"
+                    className="flex size-8 items-center justify-center rounded-[8px] border border-[#DDE7F4] bg-white text-[#0A4EA5] transition-colors hover:bg-[#EDF4FD] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft className="size-4" />
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={calendarMonth.getMonth()}
+                      onChange={handleMonthSelectChange}
+                      className="montserrat h-8 rounded-[7px] border border-[#D8E2F1] bg-white px-2 text-[14px] font-semibold text-[#0B4FA8] outline-none focus:border-[#0A4EA5]/50"
+                    >
+                      {monthLabels.map((monthLabel, index) => (
+                        <option key={monthLabel} value={index}>
+                          {monthLabel}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={calendarMonth.getFullYear()}
+                      onChange={handleYearSelectChange}
+                      className="montserrat h-8 rounded-[7px] border border-[#D8E2F1] bg-white px-2 text-[14px] font-semibold text-[#0B4FA8] outline-none focus:border-[#0A4EA5]/50"
+                    >
+                      {yearOptions.map((yearOption) => (
+                        <option key={yearOption} value={yearOption}>
+                          {yearOption}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setCalendarMonth(nextMonth)}
+                    disabled={isNextDisabled}
+                    aria-label="Next month"
+                    className="flex size-8 items-center justify-center rounded-[8px] border border-[#DDE7F4] bg-white text-[#0A4EA5] transition-colors hover:bg-[#EDF4FD] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronRight className="size-4" />
+                  </button>
+                </div>
+
                 <Calendar
                   mode="single"
                   selected={selectedStartDate}
-                  defaultMonth={selectedStartDate ?? today}
+                  month={calendarMonth}
+                  onMonthChange={setCalendarMonth}
+                  hideNavigation
+                  startMonth={calendarStartMonth}
+                  endMonth={calendarEndMonth}
                   disabled={{ before: today }}
                   weekStartsOn={6}
                   onSelect={(date) => {
@@ -329,12 +413,23 @@ export default function SubscriptionPlans() {
                     }
                   }}
                   classNames={{
-                    button_previous: 'hidden',
-                    button_next: 'hidden',
+                    month_caption: 'hidden',
+                    nav: 'hidden',
+                    weekdays: 'mt-1 grid grid-cols-7 gap-1',
+                    weekday: 'text-center text-[12px] font-medium text-[#6F7A8B]',
+                    weeks: 'mt-1 flex flex-col gap-1',
+                    week: 'grid grid-cols-7 gap-1',
+                    day: 'size-9 rounded-[7px] bg-[#EAF2FB] p-0 text-[#5278A6] transition-none hover:bg-[#EAF2FB] hover:text-[#5278A6]',
+                    day_button:
+                      'size-9 cursor-pointer rounded-[7px] border-0 bg-transparent p-0 text-[15px] font-semibold transition-none hover:bg-transparent hover:text-inherit focus:bg-transparent focus:text-inherit',
                     selected:
                       '!bg-[#0A4EA5] !text-white hover:!bg-[#0A4EA5] hover:!text-white [&>button]:!text-white [&>button:hover]:!bg-transparent [&>button:hover]:!text-white',
                     today:
-                      'bg-[#DCEBFB] text-[#0A4EA5] [&>button]:text-[#0A4EA5]',
+                      'bg-[#DCEBFB] text-[#0A4EA5] hover:bg-[#DCEBFB] hover:text-[#0A4EA5] [&>button]:text-[#0A4EA5]',
+                    outside:
+                      'bg-[#F6F8FC] text-[#B2BED0] hover:bg-[#F6F8FC] hover:text-[#B2BED0] [&>button]:text-[#B2BED0]',
+                    disabled:
+                      'bg-[#F6F8FC] text-[#B2BED0] opacity-60 hover:bg-[#F6F8FC] hover:text-[#B2BED0] [&>button]:cursor-not-allowed [&>button]:text-[#B2BED0]',
                   }}
                   className="mx-auto w-full p-0"
                 />

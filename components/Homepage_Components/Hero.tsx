@@ -1,6 +1,7 @@
 'use client';
 import { motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 interface HeroButton {
@@ -16,6 +17,8 @@ interface HeroProps {
   imageSrc: string;
   buttons?: HeroButton[];
 }
+
+const isInternalHref = (href: string) => href.startsWith("/") || href.startsWith("#");
 
 export default function Hero({
   heading,
@@ -131,21 +134,37 @@ export default function Hero({
               >
                 {buttons.map((btn, idx) =>
                   btn.href ? (
-                    <motion.a
+                    <motion.div
                       key={idx}
                       custom={idx}
                       variants={buttonVariants}
                       whileHover={{ y: -3, scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      href={btn.href}
-                      className={`h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-base font-bold montserrat inline-flex items-center justify-center rounded-md transition-all duration-300 ${
-                        btn.variant === "outline"
-                          ? "border border-white/20 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 hover:text-white"
-                          : "bg-[#004EB0] text-white shadow-lg hover:scale-105 hover:bg-[#0046A8]"
-                      }`}
                     >
-                      {btn.text}
-                    </motion.a>
+                      {isInternalHref(btn.href) ? (
+                        <Link
+                          href={btn.href}
+                          className={`h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-base font-bold montserrat inline-flex items-center justify-center rounded-md transition-all duration-300 ${
+                            btn.variant === "outline"
+                              ? "border border-white/20 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 hover:text-white"
+                              : "bg-[#004EB0] text-white shadow-lg hover:scale-105 hover:bg-[#0046A8]"
+                          }`}
+                        >
+                          {btn.text}
+                        </Link>
+                      ) : (
+                        <a
+                          href={btn.href}
+                          className={`h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-base font-bold montserrat inline-flex items-center justify-center rounded-md transition-all duration-300 ${
+                            btn.variant === "outline"
+                              ? "border border-white/20 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 hover:text-white"
+                              : "bg-[#004EB0] text-white shadow-lg hover:scale-105 hover:bg-[#0046A8]"
+                          }`}
+                        >
+                          {btn.text}
+                        </a>
+                      )}
+                    </motion.div>
                   ) : (
                     <motion.div
                       key={idx}

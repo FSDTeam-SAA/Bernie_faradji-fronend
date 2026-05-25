@@ -119,12 +119,12 @@ export default function ChargingServices() {
                 >
                   <div className="absolute inset-x-0 top-0 h-1 scale-x-0 bg-[#005cc8] transition-transform duration-500 group-hover:scale-x-100" />
 
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[#005cc8] text-white shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:rotate-6">
+                  <div className="mx-auto flex items-center justify-center overflow-hidden  transition-all duration-500 ">
                     {iconUrl ? (
                       <span
                         aria-label={`${title} icon`}
                         role="img"
-                        className="h-9 w-9 bg-contain bg-center bg-no-repeat"
+                        className="h-14 w-14  bg-cover rounded-full bg-no-repeat"
                         style={{ backgroundImage: `url(${iconUrl})` }}
                       />
                     ) : (
@@ -144,11 +144,13 @@ export default function ChargingServices() {
         </div>
 
         <div className="mt-12 flex justify-center">
+           <Link href="/journey">
           <button
             className="h-14 cursor-pointer montserrat rounded-md bg-[#004EB0] px-10 text-base font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-[#004EB0]/90 hover:shadow-xl"
           >
-            <Link href="/journey">Plan Your Journey</Link>
+           Plan Your Journey
           </button>
+          </Link>
         </div>
       </div>
     </section>

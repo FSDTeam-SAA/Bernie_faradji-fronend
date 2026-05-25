@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 
 type RegisterData = {
   name: string
+  phone: string
   email: string
   password: string
 }
@@ -27,6 +28,7 @@ export default function SignupPage() {
 
   const [formData, setFormData] = useState<RegisterData>({
     name: '',
+    phone: '',
     email: '',
     password: '',
   })
@@ -117,6 +119,21 @@ export default function SignupPage() {
             placeholder="Enter your email address..."
             value={formData.email}
             onChange={handleInputChange('email')}
+            className="w-full px-4 h-12 bg-[#EAEAEA] montserrat border-0 rounded-lg text-sm md:text-base placeholder:text-[#787878] focus:ring-2 focus:ring-blue-600"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="phone" className="block text-base font-semibold mb-2 text-[#2A2A2A] montserrat">
+            Phone <span className="text-[#8C311E]">*</span>
+          </Label>
+          <Input
+            id="phone"
+            type="tel"
+            required
+            placeholder="Enter your phone number..."
+            value={formData.phone}
+            onChange={handleInputChange('phone')}
             className="w-full px-4 h-12 bg-[#EAEAEA] montserrat border-0 rounded-lg text-sm md:text-base placeholder:text-[#787878] focus:ring-2 focus:ring-blue-600"
           />
         </div>

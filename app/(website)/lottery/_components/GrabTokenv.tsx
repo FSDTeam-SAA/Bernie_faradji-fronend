@@ -74,7 +74,7 @@ export default function GrabToken() {
   };
 
   return (
-    <section className="py-20 md:py-24 lg:py-28">
+    <section id="grab-your-token" className="scroll-mt-32 py-20 md:scroll-mt-36 md:py-24 lg:py-28">
       <div className="container mx-auto px-4 md:px-6">
         {/* Heading */}
         <div className="text-center mb-10">

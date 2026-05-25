@@ -48,9 +48,9 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 function isActivePath(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
-  if (href.includes("#")) return false;
-  return pathname.startsWith(href);
+  const [normalizedHref] = href.split("#");
+  if (normalizedHref === "/") return pathname === "/";
+  return pathname.startsWith(normalizedHref);
 }
 
 const isAbsoluteUrl = (value: string) =>
