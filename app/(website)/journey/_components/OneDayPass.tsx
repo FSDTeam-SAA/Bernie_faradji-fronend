@@ -1,77 +1,307 @@
 'use client';
 
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { differenceInCalendarDays, format, startOfDay } from 'date-fns';
 import { motion } from 'framer-motion';
-import {
-  Building2,
-  CarFront,
-  Circle,
-  Leaf,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { format } from 'date-fns';
+import { CircleAlert, CarFront, Circle } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import JourneyCategoriesSkeleton from './JourneyCategoriesSkeleton';
+
+interface CategoryApiItem {
+  _id: string;
+  name?: string;
+  shortDetails?: string;
+  rateActual?: number;
+  rateDiscounted?: number;
+  icon?: string;
+}
+
+interface CategoriesApiResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    categories?: CategoryApiItem[];
+  };
+}
 
 type JourneyOption = {
-  id: 'congestion' | 'ulez' | 'tunnel';
+  id: string;
   title: string;
   description: string;
-  oldPrice: string;
-  save: string;
+  priceValue: number;
+  oldPrice: string | null;
+  save: string | null;
   price: string;
-  Icon: LucideIcon;
+  icon: string | null;
 };
 
-const journeyOptions: JourneyOption[] = [
-  {
-    id: 'congestion',
-    title: 'Congestion Charge',
-    description:
-      'Standard daily charge for driving in Central London between 07:00 and 18:00.',
-    oldPrice: '£15.00',
-    save: 'SAVE 10%',
-    price: '£13.50',
-    Icon: CarFront,
-  },
-  {
-    id: 'ulez',
-    title: 'ULEZ',
-    description:
-      'Ultra Low Emission Zone charge for vehicles not meeting emissions standards.',
-    oldPrice: '£12.50',
-    save: 'SAVE 12%',
-    price: '£11.00',
-    Icon: Leaf,
-  },
-  {
-    id: 'tunnel',
-    title: 'Tunnel Charges',
-    description:
-      'Covers Blackwall and Silvertown tunnel crossings during peak hours.',
-    oldPrice: '£2.50',
-    save: 'SAVE 20%',
-    price: '£2.00',
-    Icon: Building2,
-  },
-];
+interface JourneyCheckoutPayload {
+  categoryId: string;
+  vehicleNumber: string;
+  preferredDate: string;
+}
+
+interface JourneyCheckoutResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    url?: string;
+  };
+}
+
+interface JourneySettingsApiResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    lateFee?: number;
+  };
+}
+
+const gbpFormatter = new Intl.NumberFormat('en-GB', {
+  style: 'currency',
+  currency: 'GBP',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const getApiBaseUrl = (): string => {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!apiBaseUrl) {
+    throw new Error('API base URL is not configured');
+  }
+
+  return apiBaseUrl.replace(/\/+$/, '');
+};
+
+const readApiErrorMessage = async (response: Response, fallbackMessage: string): Promise<string> => {
+  const data = await response.json().catch(() => null);
+  if (typeof data?.message === 'string' && data.message.trim()) {
+    return data.message;
+  }
+
+  return fallbackMessage;
+};
+
+const fetchJourneyCategories = async (): Promise<CategoryApiItem[]> => {
+  const response = await fetch(`${getApiBaseUrl()}/categories`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readApiErrorMessage(response, 'Something went wrong while fetching journey categories.'));
+  }
+
+  const data: CategoriesApiResponse = await response.json();
+  return data.data?.categories ?? [];
+};
+
+const fetchLateFeeSetting = async (): Promise<number> => {
+  const response = await fetch(`${getApiBaseUrl()}/journeys/settings`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(await readApiErrorMessage(response, 'Something went wrong while fetching journey settings.'));
+  }
+
+  const data: JourneySettingsApiResponse = await response.json();
+  const lateFee = data.data?.lateFee;
+
+  if (typeof lateFee !== 'number' || Number.isNaN(lateFee) || lateFee < 0) {
+    return 0;
+  }
+
+  return lateFee;
+};
+
+const formatPrice = (value?: number): string => gbpFormatter.format(value ?? 0);
+
+const formatVehicleNumber = (value: string): string =>
+  value.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s+/g, ' ');
+
+const isValidVehicleNumber = (value: string): boolean => {
+  const compactValue = value.replace(/\s/g, '');
+  return /^[A-Z0-9]{2,8}$/.test(compactValue);
+};
+
+const getSaveLabel = (actual?: number, discounted?: number): string | null => {
+  if (typeof actual !== 'number' || typeof discounted !== 'number' || actual <= 0 || discounted >= actual) {
+    return null;
+  }
+
+  const savedPercentage = Math.round(((actual - discounted) / actual) * 100);
+  return savedPercentage > 0 ? `SAVE ${savedPercentage}%` : null;
+};
+
+const mapCategoryToJourneyOption = (category: CategoryApiItem): JourneyOption => {
+  const actualRate = typeof category.rateActual === 'number' ? category.rateActual : 0;
+  const discountedRate = typeof category.rateDiscounted === 'number' ? category.rateDiscounted : actualRate;
+
+  return {
+    id: category._id,
+    title: category.name?.trim() || 'Journey Charge',
+    description: category.shortDetails?.trim() || 'No description available for this category.',
+    priceValue: discountedRate,
+    oldPrice: discountedRate < actualRate ? formatPrice(actualRate) : null,
+    save: getSaveLabel(actualRate, discountedRate),
+    price: formatPrice(discountedRate),
+    icon: category.icon?.trim() || null,
+  };
+};
 
 export default function OneDayPass() {
-  const [selectedJourney, setSelectedJourney] = useState<JourneyOption['id']>('congestion');
+  const { data: session, status: sessionStatus } = useSession();
+  const [selectedJourney, setSelectedJourney] = useState<string | null>(null);
+  const [vehicleNumber, setVehicleNumber] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
 
-  const activeJourney = useMemo(
-    () => journeyOptions.find((option) => option.id === selectedJourney) ?? journeyOptions[0],
-    [selectedJourney]
+  const {
+    data: categories = [],
+    isLoading: isCategoriesLoading,
+    isError: isCategoriesError,
+    error: categoriesError,
+  } = useQuery<CategoryApiItem[], Error>({
+    queryKey: ['journey-categories'],
+    queryFn: fetchJourneyCategories,
+  });
+
+  const { data: configuredLateFee = 0 } = useQuery<number, Error>({
+    queryKey: ['journey-settings-late-fee'],
+    queryFn: fetchLateFeeSetting,
+  });
+
+  const journeyOptions = useMemo(
+    () => categories.map(mapCategoryToJourneyOption),
+    [categories]
   );
+
+  const activeJourney = useMemo(() => {
+    if (!journeyOptions.length) {
+      return undefined;
+    }
+
+    if (!selectedJourney) {
+      return journeyOptions[0];
+    }
+
+    return journeyOptions.find((option) => option.id === selectedJourney) ?? journeyOptions[0];
+  }, [journeyOptions, selectedJourney]);
+  const activeJourneyId = activeJourney?.id ?? '';
+
   const formattedDate = useMemo(
     () => (selectedDate ? format(selectedDate, 'dd/MM/yy') : ''),
     [selectedDate]
   );
+  const today = useMemo(() => startOfDay(new Date()), []);
+  const normalizedVehicleNumber = vehicleNumber.trim().replace(/\s+/g, ' ');
+  const isVehicleNumberValid = isValidVehicleNumber(normalizedVehicleNumber);
+  const shouldShowVehicleNumberError = vehicleNumber.trim().length > 0 && !isVehicleNumberValid;
+  const selectedJourneyDate = useMemo(
+    () => (selectedDate ? startOfDay(selectedDate) : null),
+    [selectedDate]
+  );
+  const daysFromToday = useMemo(
+    () => (selectedJourneyDate ? differenceInCalendarDays(selectedJourneyDate, today) : null),
+    [selectedJourneyDate, today]
+  );
+  const hasLateFee = daysFromToday !== null && daysFromToday >= 0 && daysFromToday <= 1;
+  const lateFeeAmount = hasLateFee ? configuredLateFee : 0;
+  const basePriceValue = activeJourney?.priceValue ?? 0;
+  const totalDueValue = basePriceValue + lateFeeAmount;
+  const summaryTitle = activeJourney?.title ?? 'Journey';
+  const summaryPrice = activeJourney ? formatPrice(basePriceValue) : '--';
+  const summaryLateFee = formatPrice(lateFeeAmount);
+  const totalDuePrice = activeJourney ? formatPrice(totalDueValue) : '--';
+  const canProceedToCheckout =
+    !!activeJourney &&
+    !!selectedDate &&
+    isVehicleNumberValid &&
+    !isCategoriesLoading &&
+    !isCategoriesError;
+
+  const checkoutMutation = useMutation<JourneyCheckoutResponse, Error, JourneyCheckoutPayload>({
+    mutationFn: async (payload) => {
+      if (!session?.accessToken) {
+        throw new Error('Please login first to continue payment.');
+      }
+
+      const response = await fetch(`${getApiBaseUrl()}/journeys/buy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(await readApiErrorMessage(response, 'Failed to create checkout session.'));
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      const checkoutUrl = data?.data?.url;
+
+      if (!checkoutUrl) {
+        toast.error('Checkout URL missing. Please try again.');
+        return;
+      }
+
+      window.location.href = checkoutUrl;
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Something went wrong while starting payment.');
+    },
+  });
+
+  const handleProceedToPayment = () => {
+    if (!activeJourney) {
+      toast.error('Please choose a journey category.');
+      return;
+    }
+
+    if (!normalizedVehicleNumber) {
+      toast.error('Please enter vehicle registration number.');
+      return;
+    }
+
+    if (!isVehicleNumberValid) {
+      toast.error('Please enter a valid vehicle registration number.');
+      return;
+    }
+
+    if (!selectedDate) {
+      toast.error('Please select your preferred journey date.');
+      return;
+    }
+
+    if (sessionStatus !== 'authenticated' || !session?.accessToken) {
+      toast.error('Please login first to continue payment.');
+      return;
+    }
+
+    checkoutMutation.mutate({
+      categoryId: activeJourney.id,
+      vehicleNumber: normalizedVehicleNumber,
+      preferredDate: format(selectedDate, 'yyyy-MM-dd'),
+    });
+  };
 
   useEffect(() => {
     if (!isCalendarOpen) {
@@ -114,9 +344,23 @@ export default function OneDayPass() {
               <input
                 type="text"
                 placeholder="E.G. LN24 DRV"
-                className="montserrat h-11 w-full rounded-[8px] border border-[#D8E2F1] bg-[#F7F9FB] px-3 text-[15px] text-[#5d5959] outline-none transition-all placeholder:text-[#A1ACBC] focus:border-[#0A4EA5]/55 focus:bg-white sm:h-12 sm:text-[16px]"
+                value={vehicleNumber}
+                onChange={(event) => setVehicleNumber(formatVehicleNumber(event.target.value))}
+                maxLength={9}
+                aria-invalid={shouldShowVehicleNumberError}
+                className={cn(
+                  'montserrat h-11 w-full rounded-[8px] border bg-[#F7F9FB] px-3 text-[15px] text-[#5d5959] outline-none transition-all placeholder:text-[#A1ACBC] focus:bg-white sm:h-12 sm:text-[16px]',
+                  shouldShowVehicleNumberError
+                    ? 'border-red-300 focus:border-red-400'
+                    : 'border-[#D8E2F1] focus:border-[#0A4EA5]/55'
+                )}
               />
             </div>
+            {shouldShowVehicleNumberError ? (
+              <p className="montserrat mt-1.5 text-[12px] text-red-500 sm:text-[13px]">
+                Enter a valid VRN using 2 to 8 letters or numbers.
+              </p>
+            ) : null}
           </div>
 
           <div>
@@ -142,6 +386,8 @@ export default function OneDayPass() {
                 <Calendar
                   mode="single"
                   selected={selectedDate}
+                  defaultMonth={selectedDate ?? today}
+                  disabled={{ before: today }}
                   weekStartsOn={6}
                   onSelect={(date) => {
                     if (!date) {
@@ -150,6 +396,19 @@ export default function OneDayPass() {
 
                     setSelectedDate(date);
                     setIsCalendarOpen(false);
+                  }}
+                  classNames={{
+                    day: 'size-6 rounded-[3px] bg-[#EAF2FB] p-0 text-[#5278A6] transition-none hover:bg-[#EAF2FB] hover:text-[#5278A6]',
+                    day_button:
+                      'size-6 cursor-pointer rounded-[3px] border-0 bg-transparent p-0 text-[10px] font-semibold transition-none hover:bg-transparent hover:text-inherit focus:bg-transparent focus:text-inherit',
+                    selected:
+                      '!bg-[#0A4EA5] !text-white hover:!bg-[#0A4EA5] hover:!text-white [&>button]:!text-white [&>button:hover]:!bg-transparent [&>button:hover]:!text-white',
+                    today:
+                      'bg-[#DCEBFB] text-[#0A4EA5] hover:bg-[#DCEBFB] hover:text-[#0A4EA5] [&>button]:text-[#0A4EA5]',
+                    outside:
+                      'bg-[#F6F8FC] text-[#B2BED0] hover:bg-[#F6F8FC] hover:text-[#B2BED0] [&>button]:text-[#B2BED0]',
+                    disabled:
+                      'bg-[#F6F8FC] text-[#B2BED0] opacity-60 hover:bg-[#F6F8FC] hover:text-[#B2BED0] [&>button]:cursor-not-allowed [&>button]:text-[#B2BED0]',
                   }}
                   className="w-full p-0"
                 />
@@ -170,63 +429,77 @@ export default function OneDayPass() {
             Choose Your Preferred Journey
           </h4>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-            {journeyOptions.map((option, idx) => {
-              const isActive = selectedJourney === option.id;
+          {isCategoriesLoading ? (
+            <JourneyCategoriesSkeleton />
+          ) : journeyOptions.length > 0 ? (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+              {journeyOptions.map((option, idx) => {
+                const isActive = activeJourneyId === option.id;
 
-              return (
-                <motion.button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setSelectedJourney(option.id)}
-                  whileHover={{ y: -4 }}
-                  whileTap={{ scale: 0.99 }}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: idx * 0.08 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  className={cn(
-                    'rounded-[10px] border p-3.5 text-left transition-all duration-300',
-                    isActive
-                      ? 'border-[#A6CFFF] bg-[#F8FBFF] shadow-[0_10px_20px_rgba(9,78,165,0.14)]'
-                      : 'border-[#DCE6F3] bg-white hover:border-[#BED3F1]'
-                  )}
-                >
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className=" p-1 text-[#2F2F2F]">
-                      <option.Icon className="size-6" />
-                    </span>
+                return (
+                  <motion.button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setSelectedJourney(option.id)}
+                    whileHover={{ y: -4 }}
+                    whileTap={{ scale: 0.99 }}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: idx * 0.08 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    className={cn(
+                      'rounded-[10px] cursor-pointer border p-3.5 text-left transition-all duration-300',
+                      isActive
+                        ? 'border-[#A6CFFF] bg-[#F8FBFF] shadow-[0_10px_20px_rgba(9,78,165,0.14)]'
+                        : 'border-[#DCE6F3] bg-white hover:border-[#BED3F1]'
+                    )}
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="flex size-8 items-center justify-center rounded-[8px] bg-[#F0F5FD] p-1 text-[#2F2F2F]">
+                     <CarFront className="size-6 text-[#0A4EA5]" />
+                      </span>
 
-                    <span
-                      className={cn(
-                        'flex size-4 items-center justify-center rounded-full border',
-                        isActive ? 'border-[#0A4EA5] text-[#0A4EA5]' : 'border-[#CBD7E8] text-transparent'
-                      )}
-                    >
-                      <Circle className="size-3" fill={isActive ? 'currentColor' : 'none'} />
-                    </span>
-                  </div>
+                      <span
+                        className={cn(
+                          'flex size-4 items-center justify-center rounded-full border',
+                          isActive ? 'border-[#0A4EA5] text-[#0A4EA5]' : 'border-[#CBD7E8] text-transparent'
+                        )}
+                      >
+                        <Circle className="size-3" fill={isActive ? 'currentColor' : 'none'} />
+                      </span>
+                    </div>
 
-                  <p className="montserrat text-[18px] font-bold text-[#2B2B2B] sm:text-[20px] md:text-[24px]">
-                    {option.title}
-                  </p>
-                  <p className="montserrat mt-2 min-h-10 text-[13px] leading-5 text-[#747474] sm:mt-3 sm:text-[14px] sm:leading-4">
-                    {option.description}
-                  </p>
+                    <p className="montserrat text-[18px] font-bold text-[#2B2B2B] sm:text-[20px] md:text-[24px]">
+                      {option.title}
+                    </p>
+                    <p className="montserrat mt-2 min-h-10 text-[13px] leading-5 text-[#747474] sm:mt-3 sm:text-[14px] sm:leading-4">
+                      {option.description}
+                    </p>
 
-                  <div className="mt-2 flex items-center gap-1 text-[14px] sm:text-[16px]">
-                    <span className="montserrat text-[#9F9F9F] line-through">{option.oldPrice}</span>
-                    <span className="montserrat rounded-[4px] bg-[#E6EDF7] p-1 font-semibold text-[#004EAF]">
-                      {option.save}
-                    </span>
-                  </div>
-                  <p className="montserrat mt-1 text-[22px] font-semibold text-[#004EAF] sm:text-[24px]">
-                    {option.price}
-                  </p>
-                </motion.button>
-              );
-            })}
-          </div>
+                    <div className="mt-2 flex min-h-7 items-center gap-1 text-[14px] sm:text-[16px]">
+                      {option.oldPrice ? (
+                        <span className="montserrat text-[#9F9F9F] line-through">{option.oldPrice}</span>
+                      ) : null}
+                      {option.save ? (
+                        <span className="montserrat rounded-[4px] bg-[#E6EDF7] p-1 font-semibold text-[#004EAF]">
+                          {option.save}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="montserrat mt-1 text-[22px] font-semibold text-[#004EAF] sm:text-[24px]">
+                      {option.price}
+                    </p>
+                  </motion.button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="montserrat mt-4 rounded-[10px] border border-[#DCE6F3] bg-white px-4 py-5 text-[14px] text-[#5D6676]">
+              {isCategoriesError
+                ? categoriesError?.message || 'Failed to load categories.'
+                : 'No journey categories found right now.'}
+            </div>
+          )}
         </motion.div>
       </motion.section>
 
@@ -235,26 +508,44 @@ export default function OneDayPass() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
         viewport={{ once: true, amount: 0.3 }}
-        className="relative mx-auto w-full max-w-[430px] overflow-hidden rounded-[12px] border border-[#E0E8F4] bg-[#F4F7FC] p-4 shadow-[0_14px_28px_rgba(11,65,137,0.14)] sm:p-5"
+        className="relative mx-auto w-full max-w-[430px] overflow-hidden rounded-[12px] border border-[#E0E8F4] bg-[#F4F7FC] p-4  sm:p-5"
       >
         <div className="absolute -right-12 -top-12 size-[120px] rounded-full bg-[#0A4EA5]/8 blur-2xl"></div>
 
         <h5 className="montserrat text-[20px] font-semibold text-[#2E3542] sm:text-[24px]">Payment Summary</h5>
         <div className="montserrat mt-3 flex items-center justify-between text-[12px] font-semibold text-[#0A4EA5] sm:mt-4 sm:text-[13px]">
-          <span>{activeJourney.title} (1 Day)</span>
-          <span>{activeJourney.price}</span>
+          <span>{summaryTitle} (1 Day)</span>
+          <span>{summaryPrice}</span>
         </div>
+
+        {hasLateFee ? (
+          <div className="montserrat mt-2 flex items-center justify-between text-[17px]">
+            <span className="flex items-center gap-1 ">
+              <CircleAlert className="size-4 text-red-500" />
+              <p className="text-red-500">Late Fee</p>
+            </span>
+            <span className="font-semibold text-red-500">{summaryLateFee}</span>
+          </div>
+        ) : null}
 
         <div className="my-4 h-px bg-[#D9E3F1]"></div>
 
         <div className="montserrat flex items-center justify-between gap-3 text-[#2B3240]">
           <span className="text-[22px] font-semibold sm:text-[27px]">Total Due</span>
-          <span className="text-[38px] font-semibold leading-none sm:text-[48px]">{activeJourney.price}</span>
+          <span className="text-[38px] font-semibold leading-none sm:text-[48px]">{totalDuePrice}</span>
         </div>
 
-        <Button className="montserrat mt-4 h-11 w-full cursor-pointer rounded-[8px] bg-[#004EB0] text-[15px] font-semibold text-white hover:bg-[#004EB0]/90 sm:h-12 sm:text-[16px]">
-          Proceed to Secure Payment
-        </Button>
+    <Button
+  onClick={handleProceedToPayment}
+  disabled={!canProceedToCheckout || checkoutMutation.isPending || sessionStatus === 'loading'}
+  className={`montserrat mt-4 h-11 w-full rounded-[8px] text-[15px] font-semibold text-white sm:h-12 sm:text-[16px] ${
+    !canProceedToCheckout || checkoutMutation.isPending || sessionStatus === 'loading'
+      ? 'cursor-not-allowed bg-gray-400 text-black/50'
+      : 'cursor-pointer bg-[#004EB0] hover:bg-[#004EB0]/90'
+  }`}
+>
+  {checkoutMutation.isPending ? 'Processing...' : 'Proceed to Secure Payment'}
+</Button>
       </motion.section>
     </div>
   );

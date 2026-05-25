@@ -27,7 +27,7 @@ export default function JourneyDiscountPlansPage() {
           </p>
         </motion.div>
 
-        <Tabs defaultValue="subscription" className="mx-auto mt-7 w-full md:mt-10">
+        <Tabs defaultValue="oneDay" className="mx-auto mt-7 w-full md:mt-10">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}

@@ -4,21 +4,79 @@ import type { FormEvent } from 'react'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useMutation } from '@tanstack/react-query'
 import { Eye, EyeOff } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { AuthLayout, AuthLogo } from '@/components/auth/auth-layout'
+import { toast } from 'sonner' 
+
+type RegisterData = {
+  name: string
+  email: string
+  password: string
+}
 
 export default function SignupPage() {
   const router = useRouter()
+
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const handleCreateAccount = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    router.push('/verify-otp')
+  const [formData, setFormData] = useState<RegisterData>({
+    name: '',
+    email: '',
+    password: '',
+  })
+
+  const [confirmPassword, setConfirmPassword] = useState('')
+
+  // TanStack Query Mutation
+  const mutation = useMutation({
+    mutationFn: async (data: RegisterData) => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Registration failed')
+      }
+
+      return response.json()
+    },
+    onSuccess: () => {
+      toast.success('Account created successfully!', {
+        description: 'Please log in with your credentials.',
+      })
+      router.push('/login')
+    },
+    onError: (error: Error) => {
+      toast.error('Registration failed', {
+        description: error.message || 'Something went wrong. Please try again.',
+      })
+    },
+  })
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    if (formData.password !== confirmPassword) {
+      toast.error('Passwords do not match')
+      return
+    }
+
+    mutation.mutate(formData)
+  }
+
+  const handleInputChange = (field: keyof RegisterData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, [field]: e.target.value }))
   }
 
   return (
@@ -32,7 +90,7 @@ export default function SignupPage() {
         Create an account
       </h1>
 
-      <form onSubmit={handleCreateAccount} className="space-y-4 md:space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
         <div>
           <Label htmlFor="name" className="block text-base font-semibold mb-2 text-[#2A2A2A] montserrat">
             Name <span className="text-[#8C311E]">*</span>
@@ -42,6 +100,8 @@ export default function SignupPage() {
             type="text"
             required
             placeholder="Enter your name..."
+            value={formData.name}
+            onChange={handleInputChange('name')}
             className="w-full px-4 h-12 bg-[#EAEAEA] montserrat border-0 rounded-lg text-sm md:text-base placeholder:text-[#787878] focus:ring-2 focus:ring-blue-600"
           />
         </div>
@@ -55,6 +115,8 @@ export default function SignupPage() {
             type="email"
             required
             placeholder="Enter your email address..."
+            value={formData.email}
+            onChange={handleInputChange('email')}
             className="w-full px-4 h-12 bg-[#EAEAEA] montserrat border-0 rounded-lg text-sm md:text-base placeholder:text-[#787878] focus:ring-2 focus:ring-blue-600"
           />
         </div>
@@ -69,6 +131,8 @@ export default function SignupPage() {
               type={showPassword ? 'text' : 'password'}
               required
               placeholder="Enter password..."
+              value={formData.password}
+              onChange={handleInputChange('password')}
               className="w-full px-4 h-12 bg-[#EAEAEA] montserrat border-0 rounded-[12px] text-sm md:text-base placeholder:text-[#787878] focus:ring-2 focus:ring-blue-600 pr-10"
             />
             <button
@@ -92,6 +156,8 @@ export default function SignupPage() {
               type={showConfirmPassword ? 'text' : 'password'}
               required
               placeholder="Enter password again..."
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full px-4 h-12 bg-[#EAEAEA] montserrat border-0 rounded-[12px] text-sm md:text-base placeholder:text-[#787878] focus:ring-2 focus:ring-blue-600 pr-10"
             />
             <button
@@ -117,9 +183,10 @@ export default function SignupPage() {
 
         <Button
           type="submit"
-          className="w-full cursor-pointer h-12 montserrat bg-[#033D86] hover:bg-[#033D86]/90 text-white font-semibold py-2.5 md:py-3 rounded-lg text-sm md:text-base"
+          disabled={mutation.isPending}
+          className="w-full cursor-pointer h-12 montserrat bg-[#033D86] hover:bg-[#033D86]/90 text-white font-semibold py-2.5 md:py-3 rounded-lg text-sm md:text-base disabled:opacity-70"
         >
-          Create Account
+          {mutation.isPending ? 'Creating Account...' : 'Create Account'}
         </Button>
 
         <p className="text-center text-sm text-gray-600">

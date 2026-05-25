@@ -24,7 +24,7 @@ export default function AboutUs() {
             <br />
             Join our growing community and experience the thrill of winning with
             [Your Raffle Brand]. Your next big win could be just one ticket
-            away.
+            away.sss
           </p>
         </div>
 

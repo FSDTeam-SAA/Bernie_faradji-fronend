@@ -10,9 +10,7 @@ const page = () => {
         heading="Get Your Tokens Here"
         description="Enter our exclusive monthly Insurance by purchasing entry tokens. Win amazing Insurance!"
         imageSrc="/lottery.png"
-        buttons={[
-          { text: "Buy Entry Tokens", href: "/lottery" },
-        ]}
+      
       />
       <GrabToken />
     </div>
