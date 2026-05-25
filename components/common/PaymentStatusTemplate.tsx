@@ -3,16 +3,35 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
-import { CalendarDays, CircleDollarSign, Hash, CheckCircle2, XCircle, TriangleAlert } from "lucide-react";
+import {
+  BadgeCheck,
+  CalendarDays,
+  CircleDollarSign,
+  CreditCard,
+  Hash,
+  CheckCircle2,
+  XCircle,
+  TriangleAlert,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type PaymentStatus = "success" | "failed";
+type PaymentDetailIcon = "transaction" | "amount" | "date" | "card" | "status";
+type PaymentDetailType = "amount" | "date" | "text";
 
 interface PaymentAction {
   href: string;
   label: string;
+}
+
+export interface PaymentDetailField {
+  label: string;
+  keys: string[];
+  type?: PaymentDetailType;
+  icon?: PaymentDetailIcon;
+  fallback?: string;
 }
 
 interface PaymentStatusTemplateProps {
@@ -24,6 +43,7 @@ interface PaymentStatusTemplateProps {
   secondaryAction: PaymentAction;
   checklist: string[];
   fallbackReason?: string;
+  detailFields?: PaymentDetailField[];
 }
 
 const decodeParam = (value: string) => {
@@ -78,6 +98,14 @@ const formatAmount = (amountValue: string, currencyValue: string) => {
   }
 };
 
+const detailIconMap = {
+  transaction: Hash,
+  amount: CircleDollarSign,
+  date: CalendarDays,
+  card: CreditCard,
+  status: BadgeCheck,
+};
+
 export default function PaymentStatusTemplate({
   status,
   title,
@@ -87,10 +115,23 @@ export default function PaymentStatusTemplate({
   secondaryAction,
   checklist,
   fallbackReason = "Your payment could not be completed. Please try again in a moment.",
+  detailFields,
 }: PaymentStatusTemplateProps) {
   const searchParams = useSearchParams();
   const isSuccess = status === "success";
   const StatusIcon = isSuccess ? CheckCircle2 : XCircle;
+
+  const getParamValue = (keys: string[]) => {
+    for (const key of keys) {
+      const value = searchParams.get(key);
+
+      if (value) {
+        return value;
+      }
+    }
+
+    return "";
+  };
 
   const transactionId =
     searchParams.get("transactionId") ||
@@ -108,6 +149,52 @@ export default function PaymentStatusTemplate({
   const displayAmount = formatAmount(amountValue, currencyValue);
   const displayDate = formatDate(dateValue);
   const displayReason = decodeParam(reasonValue);
+  const defaultDetailFields: PaymentDetailField[] = [
+    {
+      label: "Transaction",
+      keys: ["transactionId", "orderId", "session_id", "trxId"],
+      icon: "transaction",
+      fallback: displayTransactionId,
+    },
+    {
+      label: "Amount",
+      keys: ["amount", "total"],
+      type: "amount",
+      icon: "amount",
+      fallback: displayAmount,
+    },
+    {
+      label: "Date",
+      keys: ["date", "createdAt"],
+      type: "date",
+      icon: "date",
+      fallback: displayDate,
+    },
+  ];
+
+  const displayDetails = (detailFields || defaultDetailFields)
+    .map((field) => {
+      const value = getParamValue(field.keys);
+
+      if (!value && !field.fallback) {
+        return null;
+      }
+
+      const formattedValue = value
+        ? field.type === "amount"
+          ? formatAmount(value, currencyValue)
+          : field.type === "date"
+            ? formatDate(value)
+            : decodeParam(value)
+        : decodeParam(field.fallback || "");
+
+      return {
+        ...field,
+        value: formattedValue,
+        Icon: detailIconMap[field.icon || "transaction"],
+      };
+    })
+    .filter((field): field is PaymentDetailField & { value: string; Icon: typeof Hash } => Boolean(field));
 
   return (
     <section className="relative min-h-screen overflow-hidden px-4 pb-16 pt-32 sm:px-6 lg:px-8">
@@ -134,7 +221,7 @@ export default function PaymentStatusTemplate({
         initial={{ opacity: 0, y: 26, scale: 0.985 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-        className="mx-auto w-full max-w-3xl"
+        className={cn("mx-auto w-full", displayDetails.length > 3 ? "max-w-4xl" : "max-w-3xl")}
       >
         <div className="rounded-[28px] border border-white/85 bg-white/85 p-6 shadow-[0_26px_70px_rgba(0,78,176,0.17)] backdrop-blur-xl sm:p-8 md:p-10">
           <div className="text-center">
@@ -172,31 +259,19 @@ export default function PaymentStatusTemplate({
             </p>
           </div>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-[#DAE8FC] bg-[#F7FAFF] p-4">
-              <div className="montserrat flex items-center gap-2 text-xs font-semibold tracking-[0.1em] text-[#6A7E9B] uppercase">
-                <Hash className="size-4" />
-                Transaction
-              </div>
-              <p className="montserrat mt-2 break-all text-sm font-semibold text-[#24476E]">{displayTransactionId}</p>
+          {displayDetails.length > 0 && (
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {displayDetails.map(({ label, value, Icon }) => (
+                <div key={label} className="rounded-2xl border border-[#DAE8FC] bg-[#F7FAFF] p-4">
+                  <div className="montserrat flex items-center gap-2 text-xs font-semibold tracking-[0.1em] text-[#6A7E9B] uppercase">
+                    <Icon className="size-4" />
+                    {label}
+                  </div>
+                  <p className="montserrat mt-2 break-all text-sm font-semibold text-[#24476E]">{value}</p>
+                </div>
+              ))}
             </div>
-
-            <div className="rounded-2xl border border-[#DAE8FC] bg-[#F7FAFF] p-4">
-              <div className="montserrat flex items-center gap-2 text-xs font-semibold tracking-[0.1em] text-[#6A7E9B] uppercase">
-                <CircleDollarSign className="size-4" />
-                Amount
-              </div>
-              <p className="montserrat mt-2 text-sm font-semibold text-[#24476E]">{displayAmount}</p>
-            </div>
-
-            <div className="rounded-2xl border border-[#DAE8FC] bg-[#F7FAFF] p-4">
-              <div className="montserrat flex items-center gap-2 text-xs font-semibold tracking-[0.1em] text-[#6A7E9B] uppercase">
-                <CalendarDays className="size-4" />
-                Date
-              </div>
-              <p className="montserrat mt-2 text-sm font-semibold text-[#24476E]">{displayDate}</p>
-            </div>
-          </div>
+          )}
 
           {!isSuccess && (
             <div className="mt-4 rounded-2xl border border-[#FAD0D5] bg-[#FFF5F6] p-4">

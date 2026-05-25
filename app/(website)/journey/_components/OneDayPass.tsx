@@ -322,13 +322,13 @@ export default function OneDayPass() {
   }, [isCalendarOpen]);
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
       <motion.section
         initial={{ opacity: 0, y: 26 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55 }}
         viewport={{ once: true, amount: 0.2 }}
-        className="rounded-[14px] p-4  sm:p-5 md:rounded-[10px] md:p-6 md:shadow-none"
+        className="min-w-0 rounded-[14px] border border-[#E3EBF6] bg-white p-4 shadow-[0_14px_36px_rgba(10,78,165,0.08)] sm:p-5 md:rounded-[10px] md:p-6"
       >
         <div className="space-y-4">
           <h3 className="montserrat flex items-center gap-2 text-[20px] font-semibold text-[#004EAF] sm:text-[22px] md:text-[24px]">
@@ -432,7 +432,7 @@ export default function OneDayPass() {
           {isCategoriesLoading ? (
             <JourneyCategoriesSkeleton />
           ) : journeyOptions.length > 0 ? (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {journeyOptions.map((option, idx) => {
                 const isActive = activeJourneyId === option.id;
 
@@ -508,19 +508,41 @@ export default function OneDayPass() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
         viewport={{ once: true, amount: 0.3 }}
-        className="relative mx-auto w-full max-w-[430px] overflow-hidden rounded-[12px] border border-[#E0E8F4] bg-[#F4F7FC] p-4  sm:p-5"
+        className="relative w-full overflow-hidden rounded-[12px] border border-[#D8E5F5] bg-[#F4F7FC] p-4 shadow-[0_18px_45px_rgba(10,78,165,0.12)] sm:p-5 lg:sticky lg:top-28"
       >
         <div className="absolute -right-12 -top-12 size-[120px] rounded-full bg-[#0A4EA5]/8 blur-2xl"></div>
 
-        <h5 className="montserrat text-[20px] font-semibold text-[#2E3542] sm:text-[24px]">Payment Summary</h5>
-        <div className="montserrat mt-3 flex items-center justify-between text-[12px] font-semibold text-[#0A4EA5] sm:mt-4 sm:text-[13px]">
-          <span>{summaryTitle} (1 Day)</span>
-          <span>{summaryPrice}</span>
+        <div className="relative">
+          <p className="montserrat text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6B7D98]">
+            Checkout
+          </p>
+          <h5 className="montserrat mt-1 text-[22px] font-semibold leading-tight text-[#1F2F46] sm:text-[24px]">
+            Payment Summary
+          </h5>
+        </div>
+
+        <div className="relative mt-5 rounded-[10px] border border-[#D7E4F4] bg-white p-4">
+          <div className="montserrat flex items-start justify-between gap-4 text-[14px] text-[#5B6B82]">
+            <span>Selected pass</span>
+            <span className="max-w-[180px] text-right font-semibold text-[#143D73]">{summaryTitle} (1 Day)</span>
+          </div>
+
+          <div className="montserrat mt-3 flex items-center justify-between gap-4 text-[14px] text-[#5B6B82]">
+            <span>Base price</span>
+            <span className="font-semibold text-[#143D73]">{summaryPrice}</span>
+          </div>
+
+          {selectedDate ? (
+            <div className="montserrat mt-3 flex items-center justify-between gap-4 text-[14px] text-[#5B6B82]">
+              <span>Journey date</span>
+              <span className="font-semibold text-[#143D73]">{formattedDate}</span>
+            </div>
+          ) : null}
         </div>
 
         {hasLateFee ? (
-          <div className="montserrat mt-2 flex items-center justify-between text-[17px]">
-            <span className="flex items-center gap-1 ">
+          <div className="montserrat mt-3 flex items-center justify-between rounded-[10px] border border-red-100 bg-red-50 px-4 py-3 text-[15px]">
+            <span className="flex items-center gap-2">
               <CircleAlert className="size-4 text-red-500" />
               <p className="text-red-500">Late Fee</p>
             </span>
@@ -528,24 +550,24 @@ export default function OneDayPass() {
           </div>
         ) : null}
 
-        <div className="my-4 h-px bg-[#D9E3F1]"></div>
-
-        <div className="montserrat flex items-center justify-between gap-3 text-[#2B3240]">
-          <span className="text-[22px] font-semibold sm:text-[27px]">Total Due</span>
-          <span className="text-[38px] font-semibold leading-none sm:text-[48px]">{totalDuePrice}</span>
+        <div className="montserrat mt-5 rounded-[10px] bg-[#0A4EA5] px-4 py-4 text-white">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[15px] font-semibold uppercase tracking-[0.08em] text-white/80">Total Due</span>
+            <span className="text-[34px] font-semibold leading-none sm:text-[40px]">{totalDuePrice}</span>
+          </div>
         </div>
 
-    <Button
-  onClick={handleProceedToPayment}
-  disabled={!canProceedToCheckout || checkoutMutation.isPending || sessionStatus === 'loading'}
-  className={`montserrat mt-4 h-11 w-full rounded-[8px] text-[15px] font-semibold text-white sm:h-12 sm:text-[16px] ${
-    !canProceedToCheckout || checkoutMutation.isPending || sessionStatus === 'loading'
-      ? 'cursor-not-allowed bg-gray-400 text-black/50'
-      : 'cursor-pointer bg-[#004EB0] hover:bg-[#004EB0]/90'
-  }`}
->
-  {checkoutMutation.isPending ? 'Processing...' : 'Proceed to Secure Payment'}
-</Button>
+        <Button
+          onClick={handleProceedToPayment}
+          disabled={!canProceedToCheckout || checkoutMutation.isPending || sessionStatus === 'loading'}
+          className={`montserrat mt-4 h-12 w-full rounded-[8px] text-[15px] font-semibold text-white sm:text-[16px] ${
+            !canProceedToCheckout || checkoutMutation.isPending || sessionStatus === 'loading'
+              ? 'cursor-not-allowed bg-gray-400 text-black/50'
+              : 'cursor-pointer bg-[#004EB0] shadow-[0_12px_24px_rgba(0,78,176,0.26)] hover:bg-[#004EB0]/90'
+          }`}
+        >
+          {checkoutMutation.isPending ? 'Processing...' : 'Proceed to Secure Payment'}
+        </Button>
       </motion.section>
     </div>
   );
