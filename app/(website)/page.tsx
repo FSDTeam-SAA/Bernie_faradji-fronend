@@ -35,7 +35,7 @@ export default function HomePage() {
           description="Enter our exclusive monthly raffle by purchasing entry tokens and get a chance to win luxury rewards, travel experiences, and exciting premium prizes."
           imageSrc="/hero.png"
           buttons={[
-            { text: "Buy Entry Tokens", href: "/lottery" },
+            { text: "Buy Entry Tokens", href: "/lottery#grab-your-token" },
             { text: "View Past Winners", href: "/winners", variant: "outline" },
           ]}
         />
