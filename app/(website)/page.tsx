@@ -36,7 +36,7 @@ export default function HomePage() {
           imageSrc="/hero.png"
           buttons={[
             { text: "Buy Entry Tokens", href: "/lottery#grab-your-token" },
-            { text: "View Past Winners", href: "/winners", variant: "outline" },
+            { text: "View Past Winners", href: "/dashboard/past-winner", variant: "outline" },
           ]}
         />
       </motion.div>
