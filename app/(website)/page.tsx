@@ -31,7 +31,7 @@ export default function HomePage() {
         viewport={{ once: true, amount: 0.22 }}
       >
         <Hero
-          heading="Win Big London’s Essential Prize Draw"
+          heading="Win Big Worldwide Essential Prize Draws"
           description="Enter our exclusive monthly raffle by purchasing entry tokens and get a chance to win luxury rewards, travel experiences, and exciting premium prizes."
           imageSrc="/hero.png"
           buttons={[
