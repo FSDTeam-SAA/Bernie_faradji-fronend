@@ -3,13 +3,20 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { addDays, addMonths, differenceInCalendarDays, format, startOfDay } from 'date-fns';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Circle, CircleAlert, CarFront } from 'lucide-react';
+import { ArrowRight, CarFront, ChevronLeft, ChevronRight, Circle, CircleAlert, Repeat2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import JourneyCategoriesSkeleton from './JourneyCategoriesSkeleton';
 
@@ -19,7 +26,9 @@ interface CategoryApiItem {
   shortDetails?: string;
   rateActual?: number;
   rateDiscounted?: number;
+  returnPrice?: number;
   icon?: string;
+  subOptions?: string[];
 }
 
 interface CategoriesApiResponse {
@@ -30,21 +39,28 @@ interface CategoriesApiResponse {
   };
 }
 
+type JourneyType = 'one-way' | 'return';
+
 type JourneyOption = {
   id: string;
   title: string;
   description: string;
   priceValue: number;
+  returnPriceValue: number;
   oldPrice: string | null;
   save: string | null;
   price: string;
+  returnPrice: string;
   icon: string | null;
+  subOptions: string[];
 };
 
 interface JourneyCheckoutPayload {
   categoryId: string;
   vehicleNumber: string;
   preferredDate: string;
+  journeyType: JourneyType;
+  subOption?: string;
 }
 
 interface JourneyCheckoutResponse {
@@ -149,22 +165,32 @@ const getSaveLabel = (actual?: number, discounted?: number): string | null => {
 const mapCategoryToJourneyOption = (category: CategoryApiItem): JourneyOption => {
   const actualRate = typeof category.rateActual === 'number' ? category.rateActual : 0;
   const discountedRate = typeof category.rateDiscounted === 'number' ? category.rateDiscounted : actualRate;
+  const returnPriceValue = typeof category.returnPrice === 'number' ? category.returnPrice : discountedRate;
+  const subOptions = Array.isArray(category.subOptions)
+    ? category.subOptions.map((option) => option.trim()).filter(Boolean)
+    : [];
 
   return {
     id: category._id,
     title: category.name?.trim() || 'Journey Charge',
     description: category.shortDetails?.trim() || 'No description available for this category.',
     priceValue: discountedRate,
+    returnPriceValue,
     oldPrice: discountedRate < actualRate ? formatPrice(actualRate) : null,
     save: getSaveLabel(actualRate, discountedRate),
     price: formatPrice(discountedRate),
+    returnPrice: formatPrice(returnPriceValue),
     icon: category.icon?.trim() || null,
+    subOptions,
   };
 };
 
 export default function OneDayPass() {
   const { data: session, status: sessionStatus } = useSession();
   const [selectedJourney, setSelectedJourney] = useState<string | null>(null);
+  const [selectedSubOption, setSelectedSubOption] = useState<string | null>(null);
+  const [selectedJourneyType, setSelectedJourneyType] = useState<JourneyType | null>(null);
+  const [isJourneyOptionModalOpen, setIsJourneyOptionModalOpen] = useState(false);
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [calendarMonth, setCalendarMonth] = useState<Date>(() => startOfDay(new Date()));
@@ -192,15 +218,11 @@ export default function OneDayPass() {
   );
 
   const activeJourney = useMemo(() => {
-    if (!journeyOptions.length) {
+    if (!selectedJourney) {
       return undefined;
     }
 
-    if (!selectedJourney) {
-      return journeyOptions[0];
-    }
-
-    return journeyOptions.find((option) => option.id === selectedJourney) ?? journeyOptions[0];
+    return journeyOptions.find((option) => option.id === selectedJourney);
   }, [journeyOptions, selectedJourney]);
   const activeJourneyId = activeJourney?.id ?? '';
 
@@ -238,14 +260,22 @@ export default function OneDayPass() {
   );
   const hasLateFee = daysFromToday !== null && daysFromToday < 0;
   const lateFeeAmount = hasLateFee ? configuredLateFee : 0;
-  const basePriceValue = activeJourney?.priceValue ?? 0;
+  const requiresSubOption = (activeJourney?.subOptions.length ?? 0) > 0;
+  const hasRequiredSubOption = !requiresSubOption || !!selectedSubOption;
+  const basePriceValue =
+    activeJourney && selectedJourneyType === 'return' ? activeJourney.returnPriceValue : activeJourney?.priceValue ?? 0;
   const totalDueValue = basePriceValue + lateFeeAmount;
-  const summaryTitle = activeJourney?.title ?? 'Journey';
-  const summaryPrice = activeJourney ? formatPrice(basePriceValue) : '--';
+  const summaryTitle = activeJourney?.title ?? 'Select a pass';
+  const summaryJourneyType =
+    selectedJourneyType === 'one-way' ? 'One-way' : selectedJourneyType === 'return' ? 'Return' : null;
+  const summaryPrice = activeJourney && selectedJourneyType ? formatPrice(basePriceValue) : '--';
   const summaryLateFee = formatPrice(lateFeeAmount);
-  const totalDuePrice = activeJourney ? formatPrice(totalDueValue) : '--';
+  const totalDuePrice = activeJourney && selectedJourneyType ? formatPrice(totalDueValue) : '--';
+  const canConfirmJourneyOptions = !!activeJourney && hasRequiredSubOption && !!selectedJourneyType;
   const canProceedToCheckout =
     !!activeJourney &&
+    hasRequiredSubOption &&
+    !!selectedJourneyType &&
     !!selectedDate &&
     isVehicleNumberValid &&
     !isCategoriesLoading &&
@@ -308,16 +338,35 @@ export default function OneDayPass() {
       return;
     }
 
+    if (requiresSubOption && !selectedSubOption) {
+      setIsJourneyOptionModalOpen(true);
+      toast.error(`Please select a ${activeJourney.title} option.`);
+      return;
+    }
+
+    if (!selectedJourneyType) {
+      setIsJourneyOptionModalOpen(true);
+      toast.error('Please select one-way or return journey.');
+      return;
+    }
+
     if (sessionStatus !== 'authenticated' || !session?.accessToken) {
       toast.error('Please login first to continue payment.');
       return;
     }
 
-    checkoutMutation.mutate({
+    const checkoutPayload: JourneyCheckoutPayload = {
       categoryId: activeJourney.id,
       vehicleNumber: normalizedVehicleNumber,
       preferredDate: format(selectedDate, 'yyyy-MM-dd'),
-    });
+      journeyType: selectedJourneyType,
+    };
+
+    if (selectedSubOption) {
+      checkoutPayload.subOption = selectedSubOption;
+    }
+
+    checkoutMutation.mutate(checkoutPayload);
   };
 
   useEffect(() => {
@@ -358,8 +407,37 @@ export default function OneDayPass() {
     setIsCalendarOpen(true);
   };
 
+  const handleJourneySelect = (optionId: string) => {
+    if (optionId !== selectedJourney) {
+      setSelectedSubOption(null);
+      setSelectedJourneyType(null);
+    }
+
+    setSelectedJourney(optionId);
+    setIsJourneyOptionModalOpen(true);
+  };
+
+  const handleJourneyOptionConfirm = () => {
+    if (!activeJourney) {
+      return;
+    }
+
+    if (requiresSubOption && !selectedSubOption) {
+      toast.error(`Please select a ${activeJourney.title} option.`);
+      return;
+    }
+
+    if (!selectedJourneyType) {
+      toast.error('Please select one-way or return journey.');
+      return;
+    }
+
+    setIsJourneyOptionModalOpen(false);
+  };
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
+    <>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
       <motion.section
         initial={{ opacity: 0, y: 26 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -536,7 +614,7 @@ export default function OneDayPass() {
                   <motion.button
                     key={option.id}
                     type="button"
-                    onClick={() => setSelectedJourney(option.id)}
+                    onClick={() => handleJourneySelect(option.id)}
                     whileHover={{ y: -4 }}
                     whileTap={{ scale: 0.99 }}
                     initial={{ opacity: 0, y: 16 }}
@@ -596,6 +674,7 @@ export default function OneDayPass() {
                 : 'No journey categories found right now.'}
             </div>
           )}
+
         </motion.div>
       </motion.section>
 
@@ -634,6 +713,20 @@ export default function OneDayPass() {
               <span className="font-semibold text-[#143D73]">{formattedDate}</span>
             </div>
           ) : null}
+
+          {selectedSubOption ? (
+            <div className="montserrat mt-3 flex items-center justify-between gap-4 text-[14px] text-[#5B6B82]">
+              <span>Sub option</span>
+              <span className="font-semibold text-[#143D73]">{selectedSubOption}</span>
+            </div>
+          ) : null}
+
+          {summaryJourneyType ? (
+            <div className="montserrat mt-3 flex items-center justify-between gap-4 text-[14px] text-[#5B6B82]">
+              <span>Journey type</span>
+              <span className="font-semibold text-[#143D73]">{summaryJourneyType}</span>
+            </div>
+          ) : null}
         </div>
 
         {hasLateFee ? (
@@ -665,6 +758,142 @@ export default function OneDayPass() {
           {checkoutMutation.isPending ? 'Processing...' : 'Proceed to Secure Payment'}
         </Button>
       </motion.section>
-    </div>
+      </div>
+
+      <Dialog open={Boolean(activeJourney) && isJourneyOptionModalOpen} onOpenChange={setIsJourneyOptionModalOpen}>
+        <DialogContent className="max-h-[calc(100dvh-1rem)] w-full max-w-[calc(100%-1rem)] gap-0 overflow-hidden rounded-[14px] border border-[#DCE6F3] bg-white p-0 shadow-[0_22px_60px_rgba(15,47,82,0.22)] sm:max-w-xl">
+          {activeJourney ? (
+            <div className="flex max-h-[calc(100dvh-1rem)] flex-col">
+              <DialogHeader className="border-b border-[#E2EAF6] bg-[#F8FBFF] px-4 pb-4 pt-5 pr-12 text-left sm:px-6">
+                <p className="montserrat text-[12px] font-semibold uppercase tracking-[0.12em] text-[#6B7D98]">
+                  One-Day Pass
+                </p>
+                <DialogTitle className="montserrat text-[22px] font-semibold leading-tight text-[#1F2F46] sm:text-[26px]">
+                  {activeJourney.title}
+                </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Select a journey sub option and journey type before checkout.
+                </DialogDescription>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  <span className="montserrat rounded-[6px] border border-[#DCE6F3] bg-white px-2.5 py-1 text-[12px] font-semibold text-[#0A4EA5]">
+                    One-way {activeJourney.price}
+                  </span>
+                  <span className="montserrat rounded-[6px] border border-[#DCE6F3] bg-white px-2.5 py-1 text-[12px] font-semibold text-[#0A4EA5]">
+                    Return {activeJourney.returnPrice}
+                  </span>
+                </div>
+              </DialogHeader>
+
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+                {activeJourney.subOptions.length > 0 ? (
+                  <section>
+                    <p className="montserrat text-[16px] font-semibold text-[#1F2F46] sm:text-[18px]">
+                      Choose {activeJourney.title} Option
+                    </p>
+
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {activeJourney.subOptions.map((subOption) => {
+                        const isSubOptionActive = selectedSubOption === subOption;
+
+                        return (
+                          <button
+                            key={subOption}
+                            type="button"
+                            onClick={() => setSelectedSubOption(subOption)}
+                            className={cn(
+                              'montserrat flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-[8px] border px-3 py-2 text-left text-[14px] font-semibold transition-all sm:text-[15px]',
+                              isSubOptionActive
+                                ? 'border-[#0A4EA5] bg-[#F8FBFF] text-[#0A4EA5] shadow-[0_8px_18px_rgba(10,78,165,0.12)]'
+                                : 'border-[#D8E2F1] bg-white text-[#42526A] hover:border-[#A6CFFF]'
+                            )}
+                          >
+                            <span>{subOption}</span>
+                            <span
+                              className={cn(
+                                'flex size-4 items-center justify-center rounded-full border',
+                                isSubOptionActive
+                                  ? 'border-[#0A4EA5] text-[#0A4EA5]'
+                                  : 'border-[#CBD7E8] text-transparent'
+                              )}
+                            >
+                              <Circle className="size-3" fill={isSubOptionActive ? 'currentColor' : 'none'} />
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ) : null}
+
+                {hasRequiredSubOption ? (
+                  <section className={cn(activeJourney.subOptions.length > 0 ? 'mt-5' : '')}>
+                    <p className="montserrat text-[16px] font-semibold text-[#1F2F46] sm:text-[18px]">
+                      Choose Journey Type
+                    </p>
+
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {[
+                        {
+                          value: 'one-way' as const,
+                          label: 'One-way',
+                          price: activeJourney.price,
+                          Icon: ArrowRight,
+                        },
+                        {
+                          value: 'return' as const,
+                          label: 'Return',
+                          price: activeJourney.returnPrice,
+                          Icon: Repeat2,
+                        },
+                      ].map(({ value, label, price, Icon }) => {
+                        const isJourneyTypeActive = selectedJourneyType === value;
+
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setSelectedJourneyType(value)}
+                            className={cn(
+                              'montserrat flex min-h-16 cursor-pointer items-center gap-3 rounded-[8px] border px-3 py-2 text-left transition-all',
+                              isJourneyTypeActive
+                                ? 'border-[#0A4EA5] bg-[#F8FBFF] text-[#0A4EA5] shadow-[0_8px_18px_rgba(10,78,165,0.12)]'
+                                : 'border-[#D8E2F1] bg-white text-[#42526A] hover:border-[#A6CFFF]'
+                            )}
+                          >
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-[8px] bg-[#EEF5FF] text-[#0A4EA5]">
+                              <Icon className="size-5" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-[14px] font-semibold sm:text-[15px]">{label}</span>
+                              <span className="block text-[13px] font-medium text-[#6B7D98]">{price}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ) : null}
+              </div>
+
+              <div className="border-t border-[#E2EAF6] bg-white px-4 py-3 sm:px-6 sm:py-4">
+                <Button
+                  type="button"
+                  onClick={handleJourneyOptionConfirm}
+                  disabled={!canConfirmJourneyOptions}
+                  className={cn(
+                    'montserrat h-12 w-full rounded-[8px] text-[15px] font-semibold text-white sm:text-[16px]',
+                    canConfirmJourneyOptions
+                      ? 'cursor-pointer bg-[#004EB0] shadow-[0_12px_24px_rgba(0,78,176,0.22)] hover:bg-[#004EB0]/90'
+                      : 'cursor-not-allowed bg-gray-300 text-black/50'
+                  )}
+                >
+                  Continue
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
