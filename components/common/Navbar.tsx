@@ -42,9 +42,9 @@ type UserMeResponse = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/" },
-  { label: "Lottery", href: "/lottery" },
-  { label: "Insurance", href: "/insurance" },
   { label: "Journey Plan", href: "/journey" },
+  { label: "Insurance", href: "/insurance" },
+  { label: "Lottery", href: "/lottery" },
   { label: "About", href: "/about" },
 ];
 

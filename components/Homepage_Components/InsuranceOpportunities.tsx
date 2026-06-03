@@ -22,7 +22,7 @@ export default function InsuranceOpportunities() {
               </h2>
 
               <p className="mt-7 text-base leading-8 text-[#4E4E4E] md:text-lg">
-                Protecting what matters most should never feel complicated. At Bubblecar, we provide reliable insurance opportunities designed to give individuals and families confidence for the future. From financial protection to peace of mind, our platform connects users with accessible and trusted coverage options tailored to modern lifestyles.
+                Protecting what matters most should never feel complicated. At Bubbledrive, we provide reliable insurance opportunities designed to give individuals and families confidence for the future. From financial protection to peace of mind, our platform connects users with accessible and trusted coverage options tailored to modern lifestyles.
               </p>
 
           

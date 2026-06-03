@@ -4,7 +4,7 @@ import CountUp from "react-countup";
 
 export default function AboutUs() {
   const stats = [
-    { end: 15, suffix: "+", label: "Years Experience" },
+    { end: 3, suffix: "+", label: "Years Experience" },
     { end: 50, suffix: "+", label: "Team Members" },
     { end: 10000, suffix: "+", separator: ",", label: "Satisfied Researchers" },
   ];
@@ -17,7 +17,7 @@ export default function AboutUs() {
             About Us 
           </h2>
           <p className="mt-8 text-lg font-normal leading-7 text-[#4E4E4E]">
-            At Bubblecar, we believe everyone deserves a fair chance to win. Our
+            At Bubbledrive, we believe everyone deserves a fair chance to win. Our
             platform is built with trusted systems, real-time updates, and
             user-focused design to ensure every raffle feels exciting, engaging,
             and easy to participate in.
