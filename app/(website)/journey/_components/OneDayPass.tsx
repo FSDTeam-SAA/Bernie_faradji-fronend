@@ -164,7 +164,10 @@ const getSaveLabel = (actual?: number, discounted?: number): string | null => {
 
 const mapCategoryToJourneyOption = (category: CategoryApiItem): JourneyOption => {
   const actualRate = typeof category.rateActual === 'number' ? category.rateActual : 0;
-  const discountedRate = typeof category.rateDiscounted === 'number' ? category.rateDiscounted : actualRate;
+  const discountedRate =
+    typeof category.rateDiscounted === 'number' && category.rateDiscounted !== 0
+      ? category.rateDiscounted
+      : actualRate;
   const returnPriceValue = typeof category.returnPrice === 'number' ? category.returnPrice : discountedRate;
   const subOptions = Array.isArray(category.subOptions)
     ? category.subOptions.map((option) => option.trim()).filter(Boolean)
@@ -262,6 +265,7 @@ export default function OneDayPass() {
   const lateFeeAmount = hasLateFee ? configuredLateFee : 0;
   const requiresSubOption = (activeJourney?.subOptions.length ?? 0) > 0;
   const hasRequiredSubOption = !requiresSubOption || !!selectedSubOption;
+  const hasReturnJourneyPrice = (activeJourney?.returnPriceValue ?? 0) > 0;
   const basePriceValue =
     activeJourney && selectedJourneyType === 'return' ? activeJourney.returnPriceValue : activeJourney?.priceValue ?? 0;
   const totalDueValue = basePriceValue + lateFeeAmount;
@@ -271,11 +275,13 @@ export default function OneDayPass() {
   const summaryPrice = activeJourney && selectedJourneyType ? formatPrice(basePriceValue) : '--';
   const summaryLateFee = formatPrice(lateFeeAmount);
   const totalDuePrice = activeJourney && selectedJourneyType ? formatPrice(totalDueValue) : '--';
-  const canConfirmJourneyOptions = !!activeJourney && hasRequiredSubOption && !!selectedJourneyType;
+  const canConfirmJourneyOptions =
+    !!activeJourney && hasRequiredSubOption && !!selectedJourneyType && (selectedJourneyType !== 'return' || hasReturnJourneyPrice);
   const canProceedToCheckout =
     !!activeJourney &&
     hasRequiredSubOption &&
     !!selectedJourneyType &&
+    (selectedJourneyType !== 'return' || hasReturnJourneyPrice) &&
     !!selectedDate &&
     isVehicleNumberValid &&
     !isCategoriesLoading &&
@@ -778,9 +784,11 @@ export default function OneDayPass() {
                   <span className="montserrat rounded-[6px] border border-[#DCE6F3] bg-white px-2.5 py-1 text-[12px] font-semibold text-[#0A4EA5]">
                     One-way {activeJourney.price}
                   </span>
-                  <span className="montserrat rounded-[6px] border border-[#DCE6F3] bg-white px-2.5 py-1 text-[12px] font-semibold text-[#0A4EA5]">
-                    Return {activeJourney.returnPrice}
-                  </span>
+                  {hasReturnJourneyPrice ? (
+                    <span className="montserrat rounded-[6px] border border-[#DCE6F3] bg-white px-2.5 py-1 text-[12px] font-semibold text-[#0A4EA5]">
+                      Return {activeJourney.returnPrice}
+                    </span>
+                  ) : null}
                 </div>
               </DialogHeader>
 
@@ -839,12 +847,16 @@ export default function OneDayPass() {
                           price: activeJourney.price,
                           Icon: ArrowRight,
                         },
-                        {
-                          value: 'return' as const,
-                          label: 'Return',
-                          price: activeJourney.returnPrice,
-                          Icon: Repeat2,
-                        },
+                        ...(hasReturnJourneyPrice
+                          ? [
+                              {
+                                value: 'return' as const,
+                                label: 'Return',
+                                price: activeJourney.returnPrice,
+                                Icon: Repeat2,
+                              },
+                            ]
+                          : []),
                       ].map(({ value, label, price, Icon }) => {
                         const isJourneyTypeActive = selectedJourneyType === value;
 
