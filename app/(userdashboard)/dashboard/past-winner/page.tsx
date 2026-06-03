@@ -11,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Pagination } from "@/components/common/Pagination";
 import PastWinnerPageSkeleton from "../../_components/PastWinnerPageSkeleton";
 
@@ -126,9 +125,7 @@ const fetchWinnerHistory = async (
   return response.json();
 };
 
-const getBadgeVariant = (status: WinnerRow["status"]) => {
-  return status === "Active" ? "secondary" : "outline";
-};
+
 
 export default function PastWinnerPage() {
   const { data: session, status: sessionStatus } = useSession();
