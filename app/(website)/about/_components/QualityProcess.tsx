@@ -6,7 +6,7 @@ import Image from "next/image";
 const steps = [
   { number: 1, title: "Explore Services" },
   { number: 2, title: "Input Details" },
-  { number: 3, title: "complete Payment" },
+  { number: 3, title: "Complete Payment" },
   { number: 4, title: "Win Prizes" },
 ];
 
