@@ -1,4 +1,5 @@
-'use client';
+"use client";
+
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,7 @@ export default function Banner({
   };
 
   return (
-    <section className="relative min-h-[600px] sm:min-h-[650px] md:min-h-[760px] lg:min-h-screen overflow-hidden">
+    <section className="relative overflow-hidden min-h-[500px] sm:min-h-[600px] md:min-h-[700px] lg:min-h-screen">
       {/* Background Image */}
       <motion.div
         className="absolute inset-0"
@@ -75,34 +76,52 @@ export default function Banner({
           fill
           priority
           quality={100}
-          className="object-cover w-full h-full"
+          className="object-cover"
         />
       </motion.div>
 
-      {/* Overlay for better text visibility on mobile */}
+      {/* Overlay */}
       <motion.div
-        className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/25 to-black/35 sm:bg-gradient-to-r sm:from-black/45 sm:via-black/10 sm:to-transparent"
+        className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/45 sm:bg-gradient-to-r sm:from-black/55 sm:via-black/20 sm:to-transparent"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1.1, ease: "easeOut" }}
+        transition={{ duration: 1.1 }}
+      />
+
+      {/* Floating Blur Effects */}
+      <motion.div
+        className="pointer-events-none absolute -left-16 top-24 h-52 w-52 rounded-full bg-[#3A7ED9]/20 blur-3xl"
+        animate={{
+          y: [0, -16, 0],
+          x: [0, 10, 0],
+          opacity: [0.35, 0.55, 0.35],
+        }}
+        transition={{
+          duration: 8.2,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
       />
 
       <motion.div
-        className="pointer-events-none absolute -left-16 top-24 h-52 w-52 rounded-full bg-[#3A7ED9]/20 blur-3xl"
-        animate={{ y: [0, -16, 0], x: [0, 10, 0], opacity: [0.35, 0.55, 0.35] }}
-        transition={{ duration: 8.2, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
         className="pointer-events-none absolute -right-14 bottom-14 h-56 w-56 rounded-full bg-[#005cc8]/25 blur-3xl"
-        animate={{ y: [0, 14, 0], x: [0, -8, 0], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 9.4, repeat: Infinity, ease: "easeInOut" }}
+        animate={{
+          y: [0, 14, 0],
+          x: [0, -8, 0],
+          opacity: [0.3, 0.5, 0.3],
+        }}
+        transition={{
+          duration: 9.4,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
       />
 
       {/* Hero Content */}
-      <div className="relative z-10 flex items-center justify-center lg:justify-start pt-24 sm:pt-32 lg:pt-80 min-h-150">
-        <div className="container mx-auto px-4 md:px-6">
+      <div className="relative z-10 flex min-h-[500px] sm:min-h-[600px] md:min-h-[700px] lg:min-h-screen items-center justify-center">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="text-center "
+            className="mx-auto max-w-6xl text-center"
             variants={contentVariants}
             initial="hidden"
             animate="show"
@@ -110,7 +129,18 @@ export default function Banner({
             {/* Heading */}
             <motion.h1
               variants={itemVariants}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-normal text-center leading-tight tracking-tight text-white drop-shadow-[0_14px_28px_rgba(0,0,0,0.35)]"
+              className="
+                text-[32px]
+                sm:text-[42px]
+                md:text-[52px]
+                lg:text-[60px]
+                xl:text-[72px]
+                font-normal
+                leading-tight
+                tracking-tight
+                text-white
+                drop-shadow-[0_14px_28px_rgba(0,0,0,0.35)]
+              "
             >
               {heading}
             </motion.h1>
@@ -118,7 +148,21 @@ export default function Banner({
             {/* Description */}
             <motion.p
               variants={itemVariants}
-              className="mt-4 w-300 mx-auto sm:mt-6 text-base sm:text-lg md:text-xl text-white/90 leading-7"
+              className="
+                mx-auto
+                mt-4
+                max-w-[95%]
+                sm:max-w-[85%]
+                md:max-w-[700px]
+                lg:max-w-[850px]
+                xl:max-w-[950px]
+                text-sm
+                sm:text-base
+                md:text-lg
+                lg:text-xl
+                leading-relaxed
+                text-white/90
+              "
             >
               {description}
             </motion.p>
@@ -127,7 +171,18 @@ export default function Banner({
             {buttons.length > 0 && (
               <motion.div
                 variants={itemVariants}
-                className="mt-6 sm:mt-10 flex flex-col sm:flex-row justify-center lg:justify-start items-center gap-4"
+                className="
+                  mt-6
+                  sm:mt-8
+                  md:mt-10
+                  flex
+                  flex-col
+                  sm:flex-row
+                  items-center
+                  justify-center
+                  gap-3
+                  sm:gap-4
+                "
               >
                 {buttons.map((btn, idx) =>
                   btn.href ? (
@@ -138,11 +193,24 @@ export default function Banner({
                       whileHover={{ y: -3, scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       href={btn.href}
-                      className={`h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-base font-bold montserrat inline-flex items-center justify-center rounded-md transition-all duration-300 ${
-                        btn.variant === "outline"
-                          ? "border border-white/20 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 hover:text-white"
-                          : "bg-[#004EB0] text-white shadow-lg hover:scale-105 hover:bg-[#0046A8]"
-                      }`}
+                      className={`
+                        h-11 sm:h-12 md:h-14
+                        px-5 sm:px-7 md:px-8
+                        text-sm sm:text-base
+                        font-bold
+                        montserrat
+                        inline-flex
+                        items-center
+                        justify-center
+                        rounded-md
+                        transition-all
+                        duration-300
+                        ${
+                          btn.variant === "outline"
+                            ? "border border-white/20 bg-white/10 text-white backdrop-blur-md hover:bg-white/20"
+                            : "bg-[#004EB0] text-white shadow-lg hover:bg-[#0046A8]"
+                        }
+                      `}
                     >
                       {btn.text}
                     </motion.a>
@@ -156,12 +224,20 @@ export default function Banner({
                     >
                       <Button
                         variant={btn.variant || "default"}
-                        className={`h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-base font-bold transition-all duration-300 ${
-                          btn.variant === "outline"
-                            ? "border border-white/20 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 hover:text-white"
-                            : "bg-[#004EB0] text-white shadow-lg hover:scale-105 hover:bg-[#0046A8]"
-                        }`}
                         onClick={btn.onClick}
+                        className={`
+                          h-11 sm:h-12 md:h-14
+                          px-5 sm:px-7 md:px-8
+                          text-sm sm:text-base
+                          font-bold
+                          transition-all
+                          duration-300
+                          ${
+                            btn.variant === "outline"
+                              ? "border border-white/20 bg-white/10 text-white backdrop-blur-md hover:bg-white/20"
+                              : "bg-[#004EB0] text-white shadow-lg hover:bg-[#0046A8]"
+                          }
+                        `}
                       >
                         {btn.text}
                       </Button>

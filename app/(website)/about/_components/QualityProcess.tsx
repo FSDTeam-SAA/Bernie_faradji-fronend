@@ -6,7 +6,7 @@ import Image from "next/image";
 const steps = [
   { number: 1, title: "Explore Services" },
   { number: 2, title: "Input Details" },
-  { number: 3, title: "complete Payment" },
+  { number: 3, title: "Complete Payment" },
   { number: 4, title: "Win Prizes" },
 ];
 
@@ -18,28 +18,24 @@ const teamStats = [
 
 export default function QualityProcess() {
   return (
-    <section className="bg-[#EEF2F7] py-16 md:py-20 lg:py-6">
-      <div className="container mx-auto px-0 md:px-0">
-        {/* Our Quality Process Section */}
-      
-
-        {/* About Us - Bubble drive - About Us Section */}
-        <div className="mx-auto mt-16 w-full md:mt-20">
-       
-
+    <section className="bg-[#EEF2F7] py-12 px-4 sm:py-16 md:py-20 lg:py-24">
+      <div className="container mx-auto  px-0 sm:px-4 md:px-6">
+        
+        {/* About Us - Bubbledrive  - About Us Section */}
+        <div className="mx-auto mt-2 w-full md:mt-16 lg:mt-20">
           <motion.div
-            className="mt-8 space-y-6 text-[#3A3E44]"
+            className="mt-6 space-y-6 text-[#3A3E44] sm:mt-8 md:space-y-8"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             viewport={{ once: true, amount: 0.3 }}
           >
             <div>
-              <h3 className="text-2xl font-medium text-[#143A73] md:text-3xl">
-                Welcome to Bubbledrive Ltd
+              <h3 className="text-xl font-medium text-[#143A73] sm:text-2xl md:text-3xl lg:text-4xl">
+                Welcome to Bubbledrive 
               </h3>
-              <p className="mt-3 leading-relaxed">
-                At Bubbledrive Ltd, our mission is simple: to create a smarter,
+              <p className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-base md:text-lg">
+                At Bubbledrive , our mission is simple: to create a smarter,
                 more rewarding driving experience for everyday motorists. We
                 understand that driving comes with a variety of ongoing costs
                 and responsibilities, from congestion charges and tunnel fees to
@@ -56,10 +52,10 @@ export default function QualityProcess() {
             </div>
 
             <div>
-              <h3 className="text-2xl font-medium text-[#143A73] md:text-3xl ">
+              <h3 className="text-xl font-medium text-[#143A73] sm:text-2xl md:text-3xl lg:text-4xl">
                 A Platform Built for Drivers
               </h3>
-              <p className="mt-3 leading-relaxed">
+              <p className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-base md:text-lg">
                 Bubbledrive brings together a range of services that help
                 motorists manage their driving-related expenses in one place.
                 Members can access information and payment services for various
@@ -75,10 +71,10 @@ export default function QualityProcess() {
             </div>
 
             <div>
-              <h3 className="text-2xl font-medium text-[#143A73] md:text-3xl">
+              <h3 className="text-xl font-medium text-[#143A73] sm:text-2xl md:text-3xl lg:text-4xl">
                 Making Driving More Rewarding
               </h3>
-              <p className="mt-3 leading-relaxed">
+              <p className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-base md:text-lg">
                 What makes Bubbledrive truly unique is our driver-exclusive
                 lottery and rewards system. Unlike traditional prize platforms,
                 participation is reserved for eligible drivers with a vehicle
@@ -93,10 +89,10 @@ export default function QualityProcess() {
             </div>
 
             <div>
-              <h3 className="text-2xl font-medium text-[#143A73] md:text-3xl">
+              <h3 className="text-xl font-medium text-[#143A73] sm:text-2xl md:text-3xl lg:text-4xl">
                 An Exclusive Driver Community
               </h3>
-              <p className="mt-3 leading-relaxed">
+              <p className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-base md:text-lg">
                 When you join Bubbledrive, you become part of an exclusive
                 community built around supporting drivers. Our members benefit
                 from a platform that aims to reduce stress, simplify
@@ -109,10 +105,10 @@ export default function QualityProcess() {
             </div>
 
             <div>
-              <h3 className="text-2xl font-medium text-[#143A73] md:text-3xl">
+              <h3 className="text-xl font-medium text-[#143A73] sm:text-2xl md:text-3xl lg:text-4xl">
                 Our Vision
               </h3>
-              <p className="mt-3 leading-relaxed">
+              <p className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-base md:text-lg">
                 Our vision is to become the UK&apos;s leading driver-focused
                 platform, combining practical motoring services, member savings,
                 and innovative reward opportunities within a single trusted
@@ -122,9 +118,11 @@ export default function QualityProcess() {
             </div>
           </motion.div>
         </div>
-          <div className="mx-auto max-w-3xl text-center mt-14">
+
+        {/* Our Quality Process Section */}
+        <div className="mx-auto mt-12 max-w-3xl text-center sm:mt-14 md:mt-16 lg:mt-20">
           <motion.h2
-            className="text-[36px] font-normal leading-tight text-[#2C2C2C] md:text-[48px]"
+            className="text-3xl font-normal leading-tight text-[#2C2C2C] sm:text-4xl md:text-[42px] lg:text-[48px]"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -133,7 +131,7 @@ export default function QualityProcess() {
             Our Quality Process
           </motion.h2>
           <motion.p
-            className="montserrat mt-2 text-sm text-[#5D6672] md:text-[16px]"
+            className="montserrat mt-2 px-2 text-xs text-[#5D6672] sm:mt-3 sm:text-sm md:text-base"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
@@ -143,10 +141,12 @@ export default function QualityProcess() {
           </motion.p>
         </div>
 
-        <div className="mx-auto mt-10 max-w-[1080px] md:mt-12">
+        {/* Process Steps */}
+        <div className="mx-auto mt-8 max-w-[1080px] sm:mt-10 md:mt-12">
+          {/* Desktop Steps (md and up) */}
           <div className="relative hidden md:block">
             <div className="absolute left-[calc(12.5%+18px)] right-[calc(12.5%+18px)] top-[18px] h-px bg-[#D9DEE7]"></div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-2 lg:gap-4">
               {steps.map((step, idx) => (
                 <motion.div
                   key={step.number}
@@ -157,7 +157,7 @@ export default function QualityProcess() {
                   viewport={{ once: true, amount: 0.5 }}
                 >
                   <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-full text-[14px] font-medium text-white ${
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium text-white sm:h-9 sm:w-9 sm:text-sm ${
                       step.number === 1
                         ? "bg-[#3E7FD9]"
                         : step.number === 4
@@ -167,7 +167,7 @@ export default function QualityProcess() {
                   >
                     {step.number}
                   </div>
-                  <p className="montserrat mt-3.5 text-[22px] font-medium leading-snug text-[#143A73]">
+                  <p className="montserrat mt-2 text-base font-medium leading-snug text-[#143A73] sm:mt-3 sm:text-lg md:text-xl lg:text-[22px]">
                     {step.title}
                   </p>
                 </motion.div>
@@ -175,24 +175,25 @@ export default function QualityProcess() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-4 gap-y-7 md:hidden">
+          {/* Mobile/Tablet Steps (below md) */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:hidden">
             {steps.map((step, idx) => (
               <motion.div
                 key={step.number}
-                className="rounded-lg bg-white/60 p-4 text-center"
+                className="rounded-lg bg-white/60 p-3 text-center shadow-sm sm:p-4"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: idx * 0.08 }}
                 viewport={{ once: true, amount: 0.4 }}
               >
                 <div
-                  className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium text-white ${
+                  className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium text-white sm:h-9 sm:w-9 ${
                     step.number === 1 ? "bg-[#3B78D8]" : "bg-[#123B76]"
                   }`}
                 >
                   {step.number}
                 </div>
-                <p className="montserrat mt-3 text-sm font-medium text-[#143A73]">
+                <p className="montserrat mt-2 text-xs font-medium text-[#143A73] sm:mt-3 sm:text-sm">
                   {step.title}
                 </p>
               </motion.div>
@@ -200,8 +201,9 @@ export default function QualityProcess() {
           </div>
         </div>
 
+        {/* Image Section */}
         <motion.div
-          className="mx-auto mt-12 w-full max-w-[760px] overflow-hidden rounded-[8px] shadow-[0_14px_36px_rgba(15,23,42,0.18)] md:mt-16"
+          className="mx-auto mt-10 w-full max-w-[760px] overflow-hidden rounded-[8px] shadow-[0_14px_36px_rgba(15,23,42,0.18)] sm:mt-12 md:mt-14 lg:mt-16"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65 }}
@@ -212,43 +214,53 @@ export default function QualityProcess() {
               src="/about2.png"
               alt="Our team at work"
               fill
-              sizes="(max-width: 768px) 100vw, 760px"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 760px"
               className="object-cover"
+              priority={false}
             />
           </div>
         </motion.div>
 
+        {/* Our Team Section */}
         <motion.div
-          className="mx-auto mt-16 max-w-3xl text-center md:mt-20"
+          className="mx-auto mt-12 max-w-3xl text-center sm:mt-14 md:mt-16 lg:mt-20"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, delay: 0.05 }}
           viewport={{ once: true, amount: 0.5 }}
         >
-          <h3 className="text-[34px] leading-tight text-[#2B2E35] md:text-[50px]">
+          <h3 className="text-2xl leading-tight text-[#2B2E35] sm:text-3xl md:text-4xl lg:text-[50px]">
             Our Team
           </h3>
-          <p className="montserrat mt-2 text-sm text-[#6E7681] md:text-[16px]">
+          <p className="montserrat mt-2 px-3 text-xs text-[#6E7681] sm:mt-3 sm:text-sm md:text-base">
             Excellent Workers who work for your satisfaction and celebration
           </p>
         </motion.div>
-      
 
-        <div className="mx-auto mt-7 max-w-[1040px] rounded-[10px] bg-white px-6 py-7 shadow-[0_10px_24px_rgba(46,74,113,0.16)] md:mt-8 md:px-8">
-          <div className="grid gap-5 md:grid-cols-3 md:gap-0">
+        {/* Team Stats Section */}
+        <div className="mx-auto mt-6 max-w-[1040px] rounded-[10px] bg-white px-4 py-5 shadow-[0_10px_24px_rgba(46,74,113,0.16)] sm:mt-7 sm:px-6 sm:py-6 md:mt-8 md:px-8 md:py-7">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 md:gap-0">
             {teamStats.map((stat, idx) => (
               <motion.div
                 key={stat.label}
-                className={`${idx !== teamStats.length - 1 ? "md:border-r md:border-[#E6EAF0]" : ""} text-center`}
+                className={`text-center ${
+                  idx !== teamStats.length - 1
+                    ? "sm:border-r sm:border-[#E6EAF0]"
+                    : ""
+                } ${
+                  idx === 1 && idx !== teamStats.length - 1
+                    ? "sm:border-r"
+                    : ""
+                } md:border-r`}
                 initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
                 viewport={{ once: true, amount: 0.5 }}
               >
-                <h4 className="montserrat text-[32px] font-bold leading-none text-[#173E7A] md:text-[34px]">
+                <h4 className="montserrat text-2xl font-bold leading-none text-[#173E7A] sm:text-3xl md:text-[32px] lg:text-[34px]">
                   {stat.value}
                 </h4>
-                <p className="montserrat mt-2 text-[14px] text-[#525A65]">
+                <p className="montserrat mt-1 text-xs text-[#525A65] sm:mt-2 sm:text-sm md:text-base">
                   {stat.label}
                 </p>
               </motion.div>

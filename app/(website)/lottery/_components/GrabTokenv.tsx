@@ -97,7 +97,7 @@ export default function GrabToken() {
             Grab Your Token
           </h2>
           <p className="mt-6 text-sm leading-7 text-[#4E4E4E] md:text-lg md:leading-8">
-            Bubbledrive Ltd is dedicated to creating exciting prize
+            Bubbledrive  is dedicated to creating exciting prize
             opportunities for drivers through a unique token raffle platform.
             For a minimum entry of £5, participants can purchase 1 token, which
             is assigned a unique raffle number and delivered via SMS or email.

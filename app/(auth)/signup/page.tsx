@@ -192,7 +192,7 @@ export default function SignupPage() {
           <Checkbox id="terms" className="mt-1" required />
           <Label htmlFor="terms" className="text-sm text-[#2A2A2A] cursor-pointer leading-relaxed montserrat">
             I agree to the{' '}
-            <Link href="/about" className="text-[#033D86] hover:text-[#033D86]/90">
+            <Link href="/terms&condition" className="text-[#033D86] hover:text-[#033D86]/90 hover:underline">
               terms & conditions
             </Link>
           </Label>
