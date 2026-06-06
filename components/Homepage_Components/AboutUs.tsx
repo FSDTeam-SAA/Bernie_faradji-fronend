@@ -38,7 +38,7 @@ export default function AboutUs() {
           viewport={{ once: true, amount: 0.3 }}
         >
           <p className="text-lg font-normal leading-7 text-[#4E4E4E]">
-            <span className="font-semibold text-[#1A365D]">Welcome to Bubbledrive Ltd</span> {" "} 
+            <span className="font-semibold text-[#1A365D]">Welcome to Bubbledrive </span> {" "} 
             our mission is simple: to create a smarter, more rewarding driving experience for 
             everyday motorists. We&apos;ve built a driver-focused ecosystem designed to help vehicle 
             owners save both time and money while managing their everyday driving needs.

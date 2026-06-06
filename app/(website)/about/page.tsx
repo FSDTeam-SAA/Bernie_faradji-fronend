@@ -1,9 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-
-import Banner from './_components/Banner';
 import QualityProcess from './_components/QualityProcess';
+import Banner from './_components/Banner';
 
 const page = () => {
   const scrollSectionVariants = {

@@ -21,7 +21,7 @@ const TermsAndConditionsPage = () => {
               </h2>
               <p className="text-sm sm:text-base leading-7 sm:leading-8">
                 These Terms and Conditions (“Terms”) govern participation in the
-                lottery operated by Bubbledrive Ltd (“Bubbledrive”, “we”, “our”,
+                lottery operated by Bubbledrive  (“Bubbledrive”, “we”, “our”,
                 or “us”).
               </p>
               <p className="text-sm sm:text-base leading-7 sm:leading-8 mt-3">

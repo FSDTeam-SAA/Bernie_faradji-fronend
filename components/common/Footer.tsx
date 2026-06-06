@@ -3,38 +3,61 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#033D86] text-white py-10">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="flex items-center justify-between">
+    <footer className="bg-[#033D86] py-10 text-white font-sans">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center gap-8 md:flex-row md:justify-between">
+          
           {/* Logo */}
-          <div className="flex items-center  h-20">
-              <Image
-                src="/whitelogo.png" // Replace this with your logo path
-                alt="BubbleDrive Logo"
-                width={1000}
-                height={1000}
-                className="h-full w-full object-cover"
-              />
-          </div>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/whitelogo.png"
+              alt="BubbleDrive Logo"
+              width={180}
+              height={60}
+              className="h-auto w-[140px] sm:w-[160px] md:w-[180px]"
+              priority
+            />
+          </Link>
 
           {/* Footer Links */}
-          <div className="hidden md:flex space-x-8 text-base montserrat ">
-            <Link href="/lottery" className="hover:underline">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-medium md:text-base">
+            <Link
+              href="/lottery"
+              className="transition-opacity hover:opacity-80"
+            >
               Lottery
             </Link>
-            <Link href="/insurance" className="hover:underline">
-            Insurance
+
+            <Link
+              href="/insurance"
+              className="transition-opacity hover:opacity-80"
+            >
+              Insurance
             </Link>
-            <Link href="/journey" className="hover:underline">
+
+            <Link
+              href="/journey"
+              className="transition-opacity hover:opacity-80"
+            >
               Journey Plan
             </Link>
-            <Link href="/about" className="hover:underline">
+
+            <Link
+              href="/about"
+              className="transition-opacity hover:opacity-80"
+            >
               About Us
             </Link>
           </div>
         </div>
 
-       
+        {/* Divider */}
+        <div className="my-6 h-px bg-white/20" />
+
+        {/* Copyright */}
+        <div className="text-center text-xs text-white/70 sm:text-sm">
+          © {new Date().getFullYear()} BubbleDrive. All rights reserved.
+        </div>
       </div>
     </footer>
   );
