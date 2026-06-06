@@ -239,7 +239,7 @@ export default function Navbar() {
               side="right"
               className="w-[86%] max-w-90 border-l border-[#d9e6ff] bg-linear-to-b from-[#f6faff] via-white to-[#f1f8ff] p-0"
             >
-              <div className="flex flex-col gap-2 px-4 py-5">
+              <div className="flex flex-col gap-2 px-4 py-5 mt-10">
                 {NAV_ITEMS.map((item) => {
                   const active = isActivePath(pathname, item.href);
                   return (
@@ -275,7 +275,7 @@ export default function Navbar() {
                     <SheetClose asChild>
                       <Link href="/signup">
                         <Button className="h-11 w-full rounded-full bg-[#004EB0] text-white">
-                          Signup
+                          Sign up
                         </Button>
                       </Link>
                     </SheetClose>
