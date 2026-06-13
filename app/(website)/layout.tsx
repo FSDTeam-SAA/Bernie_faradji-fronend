@@ -1,9 +1,7 @@
-
 import Footer from "@/components/common/Footer";
-import "../globals.css";
 import Navbar from "@/components/common/Navbar";
-
-
+import { GoogleAnalytics } from "@next/third-parties/google";
+import "../globals.css";
 
 export default function RootLayout({
   children,
@@ -11,12 +9,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div
-      className="bg-[#F8FBFF] "
-    >
-       <Navbar />
+    <div className="bg-[#F8FBFF] ">
+      <Navbar />
       <div>{children}</div>
-      <Footer/>
+      <Footer />
+      <GoogleAnalytics gaId={process.env.GOOGLE_ANALYTICS_ID!} />
     </div>
   );
 }
