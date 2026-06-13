@@ -5,7 +5,7 @@ import { addMonths, format, startOfDay } from 'date-fns';
 import { motion } from 'framer-motion';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -145,6 +145,7 @@ const SubscriptionPlanSkeleton = ({ index }: { index: number }) => (
 
 export default function SubscriptionPlans() {
   const { data: session, status: sessionStatus } = useSession();
+  const modalScrollRef = useRef<HTMLDivElement | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanApiItem | null>(null);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | undefined>();
   const [calendarMonth, setCalendarMonth] = useState<Date>(() => startOfDay(new Date()));
@@ -261,6 +262,19 @@ export default function SubscriptionPlans() {
     setCalendarMonth(new Date(nextYearValue, calendarMonth.getMonth(), 1));
   };
 
+  const scrollModalToCheckout = () => {
+    window.requestAnimationFrame(() => {
+      const modalScrollElement = modalScrollRef.current;
+
+      if (!modalScrollElement) return;
+
+      modalScrollElement.scrollTo({
+        top: modalScrollElement.scrollHeight,
+        behavior: 'smooth',
+      });
+    });
+  };
+
   return (
     <>
       <div className="grid gap-4 sm:gap-5 md:grid-cols-3 md:gap-6 lg:px-10">
@@ -321,8 +335,15 @@ export default function SubscriptionPlans() {
       </div>
 
       <Dialog open={Boolean(selectedPlan)} onOpenChange={handleModalOpenChange}>
-        <DialogContent className="max-h-[calc(100vh-2rem)] w-full overflow-y-auto border border-[#DCE6F3] bg-white p-0 ">
-          <div className="overflow-hidden rounded-xl">
+        <DialogContent
+          data-lenis-prevent
+          className="max-h-[calc(100dvh-1rem)] w-full max-w-[calc(100%-1rem)] gap-0 overflow-hidden rounded-[14px] border border-[#DCE6F3] bg-white p-0 shadow-[0_22px_60px_rgba(15,47,82,0.22)] sm:max-w-xl"
+        >
+          <div
+            ref={modalScrollRef}
+            data-lenis-prevent
+            className="max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain rounded-[14px]"
+          >
             <DialogHeader className="bg-[#F8FBFF] px-5 pb-4 pt-5 text-left sm:px-6">
               <div className="flex size-11 items-center justify-center rounded-full bg-[#E5F0FF] text-[#004EAF]">
                 <CalendarDays size={22} />
@@ -410,6 +431,7 @@ export default function SubscriptionPlans() {
                   onSelect={(date) => {
                     if (date) {
                       setSelectedStartDate(date);
+                      scrollModalToCheckout();
                     }
                   }}
                   classNames={{

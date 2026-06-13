@@ -13,6 +13,16 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { AuthLayout, AuthLogo } from '@/components/auth/auth-layout'
 
+const REMEMBERED_LOGIN_EMAIL_KEY = 'barnie.rememberedLoginEmail'
+
+const getRememberedLoginEmail = () => {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+
+  return window.localStorage.getItem(REMEMBERED_LOGIN_EMAIL_KEY) ?? ''
+}
+
 const getReadableAuthError = (error: string) => {
   const decodedError = decodeURIComponent(error)
 
@@ -33,19 +43,34 @@ const getReadableAuthError = (error: string) => {
 
 export default function LoginPage() {
   const router = useRouter()
+  const [rememberedLoginEmail] = useState(getRememberedLoginEmail)
   const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(rememberedLoginEmail)
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(Boolean(rememberedLoginEmail))
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleRememberMeChange = (checked: boolean | 'indeterminate') => {
+    const shouldRemember = checked === true
+
+    setRememberMe(shouldRemember)
+
+    if (!shouldRemember) {
+      window.localStorage.removeItem(REMEMBERED_LOGIN_EMAIL_KEY)
+    }
+  }
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (isSubmitting) return
 
-    const trimmedEmail = email.trim()
+    const formData = new FormData(event.currentTarget)
+    const submittedEmail = String(formData.get('email') ?? email)
+    const submittedPassword = String(formData.get('password') ?? password)
+    const trimmedEmail = submittedEmail.trim()
 
-    if (!trimmedEmail || !password) {
+    if (!trimmedEmail || !submittedPassword) {
       toast.error('Please enter both email and password.')
       return
     }
@@ -55,7 +80,7 @@ export default function LoginPage() {
     try {
       const result = await signIn('credentials', {
         email: trimmedEmail,
-        password,
+        password: submittedPassword,
         redirect: false,
         callbackUrl: '/',
       })
@@ -68,6 +93,12 @@ export default function LoginPage() {
       if (result.error) {
         toast.error(getReadableAuthError(result.error))
         return
+      }
+
+      if (rememberMe) {
+        window.localStorage.setItem(REMEMBERED_LOGIN_EMAIL_KEY, trimmedEmail)
+      } else {
+        window.localStorage.removeItem(REMEMBERED_LOGIN_EMAIL_KEY)
       }
 
       toast.success('Login successful')
@@ -91,14 +122,16 @@ export default function LoginPage() {
         Access to manage your account
       </p>
 
-      <form onSubmit={handleLogin} className="space-y-4 md:space-y-6">
+      <form onSubmit={handleLogin} autoComplete="on" className="space-y-4 md:space-y-6">
         <div>
           <Label htmlFor="email" className="block text-base font-semibold mb-2 text-[#2A2A2A] montserrat">
             Email <span className="text-[#8C311E]">*</span>
           </Label>
           <Input
             id="email"
+            name="email"
             type="email"
+            autoComplete="username"
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -114,7 +147,9 @@ export default function LoginPage() {
           <div className="relative">
             <Input
               id="password"
+              name="password"
               type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
               required
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -134,7 +169,11 @@ export default function LoginPage() {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Checkbox id="remember" />
+            <Checkbox
+              id="remember"
+              checked={rememberMe}
+              onCheckedChange={handleRememberMeChange}
+            />
             <Label htmlFor="remember" className="text-sm text-[#2A2A2A] cursor-pointer montserrat">
               Remember Me
             </Label>
