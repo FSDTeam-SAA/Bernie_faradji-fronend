@@ -6,7 +6,6 @@ export default function Footer() {
     <footer className="bg-[#033D86] py-10 text-white font-sans">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-8 md:flex-row md:justify-between">
-          
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image
@@ -22,10 +21,10 @@ export default function Footer() {
           {/* Footer Links */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-medium md:text-base">
             <Link
-              href="/lottery"
+              href="/journey"
               className="transition-opacity hover:opacity-80"
             >
-              Lottery
+              Journey Plan
             </Link>
 
             <Link
@@ -36,16 +35,13 @@ export default function Footer() {
             </Link>
 
             <Link
-              href="/journey"
+              href="/lottery"
               className="transition-opacity hover:opacity-80"
             >
-              Journey Plan
+              Lottery
             </Link>
 
-            <Link
-              href="/about"
-              className="transition-opacity hover:opacity-80"
-            >
+            <Link href="/about" className="transition-opacity hover:opacity-80">
               About Us
             </Link>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Mail } from "lucide-react";
 import Image from "next/image";
 
 const steps = [
@@ -13,8 +14,10 @@ const steps = [
 const teamStats = [
   { label: "Years Experience", value: "3+" },
   { label: "Winners", value: "50+" },
-  { label: "Satisfied Researchers", value: "10,000+" },
+  { label: "Satisfied Members", value: "10,000+" },
 ];
+
+const supportEmail = "info@bubbledrive.co.uk";
 
 export default function QualityProcess() {
   return (
@@ -32,10 +35,10 @@ export default function QualityProcess() {
           >
             <div>
               <h3 className="text-xl font-medium text-[#143A73] sm:text-2xl md:text-3xl lg:text-4xl">
-                Welcome to Bubbledrive 
+                Welcome to Bubbledrive
               </h3>
               <p className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-base md:text-lg">
-                At Bubbledrive , our mission is simple: to create a smarter,
+                At Bubbledrive, our mission is simple: to create a smarter,
                 more rewarding driving experience for everyday motorists. We
                 understand that driving comes with a variety of ongoing costs
                 and responsibilities, from congestion charges and tunnel fees to
@@ -116,6 +119,43 @@ export default function QualityProcess() {
                 drive. We&apos;re helping drivers get more value from every journey.
               </p>
             </div>
+
+            <motion.div
+              className="rounded-[8px] border border-[#C9D6E8] bg-white p-5 shadow-[0_12px_28px_rgba(28,58,100,0.12)] sm:p-6 md:flex md:items-center md:justify-between md:gap-6"
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.05 }}
+              viewport={{ once: true, amount: 0.4 }}
+            >
+              <div className="flex gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[8px] bg-[#E8F1FF] text-[#143A73]">
+                  <Mail className="size-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="montserrat text-xs font-semibold uppercase tracking-wide text-[#3E7FD9]">
+                    Contact Bubbledrive
+                  </p>
+                  <h3 className="mt-1 text-xl font-medium text-[#143A73] sm:text-2xl">
+                    Need help or have a question?
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[#5D6672] sm:text-base">
+                    For membership, service, or general enquiries, contact our
+                    team directly.
+                  </p>
+                </div>
+              </div>
+
+              <a
+                href={`mailto:${supportEmail}`}
+                aria-label={`Email Bubbledrive at ${supportEmail}`}
+                className="montserrat mt-4 inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-md bg-[#143A73] px-4 py-3 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(20,58,115,0.22)] transition-colors hover:bg-[#0E2E5F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3E7FD9] focus-visible:ring-offset-2 sm:mt-0 sm:shrink-0"
+              >
+                <Mail className="size-4" aria-hidden="true" />
+                <span className="break-all leading-none sm:break-normal">
+                  {supportEmail}
+                </span>
+              </a>
+            </motion.div>
           </motion.div>
         </div>
 

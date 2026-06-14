@@ -398,7 +398,7 @@ const TermsAndConditionsPage = () => {
           href="mailto:admin@bubbledrive.onmicrosoft.com"
           className="text-blue-600 hover:underline"
         >
-          admin@bubbledrive.onmicrosoft.com
+          info@bubbledrive.co.uk
         </a>
       </p>
     </div>
