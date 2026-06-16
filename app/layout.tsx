@@ -51,7 +51,7 @@ export default function RootLayout({
           <SmoothScrollProvider>
             <AuthSessionProvider>{children}</AuthSessionProvider>
             <Toaster position="top-right" richColors />
-            <GoogleAnalytics gaId={process.env.GOOGLE_ANALYTICS_ID!} />
+            <GoogleAnalytics gaId="G-1MYVZ8JZGY" />
           </SmoothScrollProvider>
         </QueryClientProvider>
       </body>
