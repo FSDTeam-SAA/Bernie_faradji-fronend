@@ -35,7 +35,7 @@ export default function QualityProcess() {
           >
             <div>
               <h3 className="text-xl font-medium text-[#143A73] sm:text-2xl md:text-3xl lg:text-4xl">
-                Welcome to Bubbledrive
+                Welcome to Bubbledrive 
               </h3>
               <p className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-base md:text-lg">
                 At Bubbledrive, our mission is simple: to create a smarter,
@@ -87,7 +87,7 @@ export default function QualityProcess() {
                 designed specifically for the driving community. This innovative
                 approach allows us to offer a fun and engaging experience that
                 reflects our commitment to drivers and sets Bubbledrive apart
-                from conventional lottery platforms.
+                from conventional lottery platform.
               </p>
             </div>
 
