@@ -2,19 +2,139 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Sparkles, Trophy } from "lucide-react";
+
+interface PrizeApiItem {
+  _id: string;
+  prizeTag?: string;
+  isActive?: boolean;
+}
+
+interface PrizesApiResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    prizes?: PrizeApiItem[];
+  };
+}
+
+const gbpFormatter = new Intl.NumberFormat("en-GB", {
+  style: "currency",
+  currency: "GBP",
+  maximumFractionDigits: 0,
+});
+
+const getApiBaseUrl = (): string => {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  if (!apiBaseUrl) {
+    throw new Error("API base URL is not configured");
+  }
+
+  return apiBaseUrl.replace(/\/+$/, "");
+};
+
+const readApiErrorMessage = async (
+  response: Response,
+  fallbackMessage: string,
+): Promise<string> => {
+  const data = await response.json().catch(() => null);
+
+  if (typeof data?.message === "string" && data.message.trim()) {
+    return data.message;
+  }
+
+  return fallbackMessage;
+};
+
+const fetchPrizes = async (): Promise<PrizeApiItem[]> => {
+  const response = await fetch(`${getApiBaseUrl()}/prizes`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await readApiErrorMessage(
+        response,
+        "Something went wrong while fetching prizes.",
+      ),
+    );
+  }
+
+  const data: PrizesApiResponse = await response.json();
+  return data.data?.prizes ?? [];
+};
+
+const getPrizeMoney = (prizeTag?: string): string | null => {
+  const match = prizeTag?.match(/£\s*[\d,]+(?:\.\d{1,2})?/);
+
+  if (!match) {
+    return null;
+  }
+
+  const value = Number(match[0].replace(/[£,\s]/g, ""));
+
+  if (!Number.isFinite(value)) {
+    return match[0].replace(/\s+/g, "");
+  }
+
+  return gbpFormatter.format(value);
+};
+
+const getPrizeTitle = (prizeTag?: string): string => {
+  const title = prizeTag
+    ?.replace(/£\s*[\d,]+(?:\.\d{1,2})?/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return title || "Driver Reward";
+};
+
+const PrizeHighlightSkeleton = () => (
+  <div className="mx-auto mb-10 max-w-4xl overflow-hidden rounded-xl border border-[#D8E6F7] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:p-6">
+    <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+      <div className="min-w-0 flex-1">
+        <div className="h-4 w-36 animate-pulse rounded bg-[#DCE8F6]" />
+        <div className="mt-4 h-8 w-56 animate-pulse rounded bg-[#E8EEF7]" />
+        <div className="mt-3 h-4 w-full max-w-md animate-pulse rounded bg-[#EEF3FA]" />
+      </div>
+      <div className="h-20 w-full animate-pulse rounded-lg bg-[#E6F0FB] md:w-56" />
+    </div>
+  </div>
+);
 
 export default function GrabToken() {
   const [tokenCount, setTokenCount] = useState(1);
   const [vehicleNumber, setVehicleNumber] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const session = useSession();
   const token = session.data?.accessToken;
 
   const tokenPrice = 5;
+  const {
+    data: prizes = [],
+    isLoading: isPrizesLoading,
+    isError: isPrizesError,
+    error: prizesError,
+  } = useQuery<PrizeApiItem[], Error>({
+    queryKey: ["lottery-prizes"],
+    queryFn: fetchPrizes,
+  });
+
+  const activePrize = prizes.find((prize) => prize.isActive === true);
+  const activePrizeTitle = getPrizeTitle(activePrize?.prizeTag);
+  const activePrizeMoney = getPrizeMoney(activePrize?.prizeTag);
+  const activePrizeDisplay = activePrizeMoney ?? "Coming soon";
 
   const handleIncrease = () => setTokenCount((prev) => prev + 1);
 
@@ -128,6 +248,114 @@ export default function GrabToken() {
             experience for all participants.
           </p>
         </div>
+
+        {isPrizesLoading ? (
+          <PrizeHighlightSkeleton />
+        ) : isPrizesError ? (
+          <motion.div
+            className="montserrat mx-auto mb-10 max-w-4xl rounded-lg border border-red-100 bg-red-50 px-5 py-4 text-center text-sm text-red-600"
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.45 }}
+          >
+            {prizesError?.message || "Failed to load active prize."}
+          </motion.div>
+        ) : activePrize ? (
+          <motion.div
+            className="relative mx-auto mb-10 max-w-4xl overflow-hidden rounded-xl border border-[#C9DCF4] bg-[linear-gradient(135deg,#FFFFFF_0%,#F3F8FF_58%,#FFFFFF_100%)] shadow-[0_22px_60px_rgba(15,23,42,0.10)]"
+            initial={{ opacity: 0, y: 36, scale: 0.98 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.35 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
+            <motion.div
+              className="absolute inset-x-0 top-0 h-1 bg-[#004EB0]"
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.9, delay: 0.15, ease: "easeOut" }}
+              style={{ transformOrigin: "left" }}
+            />
+
+            <div className="grid gap-6 p-5 md:grid-cols-[minmax(0,1fr)_minmax(14rem,17rem)] md:items-center md:p-7">
+              <div className="min-w-0">
+                <div className="montserrat montserrat inline-flex items-center gap-2 rounded-full border border-[#BFD8F6] bg-[#EFF6FF] px-3 py-2 text-xs font-semibold text-[#004EAF]">
+                  <Sparkles className="h-4 w-4" aria-hidden="true" />
+                  Current Active Prize
+                </div>
+
+                <h3 className="mt-4 text-2xl font-normal leading-tight text-[#2F3A4A] md:text-4xl montserrat">
+                  {activePrizeTitle}
+                </h3>
+
+                <p className="montserrat mt-3 max-w-2xl text-sm leading-6 text-[#5D6676] md:text-base">
+                  Every purchased token enters this active draw, with the prize
+                  money shown live from the current lottery reward.
+                </p>
+              </div>
+
+              <motion.div
+                className="relative flex min-h-[164px] w-full transform-gpu flex-col items-center justify-center overflow-hidden rounded-lg border border-[#BFD8F6] bg-white p-5 text-center shadow-[0_14px_36px_rgba(0,78,176,0.13)] will-change-transform md:min-h-[176px]"
+                animate={
+                  prefersReducedMotion ? undefined : { y: [0, -3, 0] }
+                }
+                transition={{
+                  duration: 5.6,
+                  repeat: Infinity,
+                  ease: [0.45, 0, 0.55, 1],
+                }}
+                style={{ backfaceVisibility: "hidden" }}
+              >
+                <motion.div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-y-0 -left-24 w-16 transform-gpu bg-white/65 blur-sm will-change-transform"
+                  animate={
+                    prefersReducedMotion ? undefined : { x: ["0%", "620%"] }
+                  }
+                  transition={{
+                    duration: 6.4,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                  style={{ backfaceVisibility: "hidden" }}
+                />
+
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#004EB0] text-white">
+                  <Trophy className="h-6 w-6" aria-hidden="true" />
+                </div>
+
+                <p className="montserrat mt-4 text-sm font-medium text-[#5D6676]">
+                  {activePrizeMoney ? "Prize Money" : "Prize Update"}
+                </p>
+
+                <motion.p
+                  key={activePrizeDisplay}
+                  className={`montserrat mt-1 max-w-full break-words font-bold leading-tight text-[#004EB0] tabular-nums ${
+                    activePrizeMoney
+                      ? "text-3xl md:text-4xl"
+                      : "text-2xl md:text-3xl"
+                  }`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.45 }}
+                >
+                  {activePrizeDisplay}
+                </motion.p>
+              </motion.div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            className="montserrat mx-auto mb-10 max-w-4xl rounded-lg border border-[#D8E2F1] bg-white px-5 py-4 text-center text-sm text-[#5D6676]"
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.45 }}
+          >
+            No active lottery prize available right now.
+          </motion.div>
+        )}
 
         {/* Form */}
         <div className="rounded-xl bg-white p-6 shadow-lg">
