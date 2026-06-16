@@ -87,7 +87,7 @@ export default function QualityProcess() {
                 designed specifically for the driving community. This innovative
                 approach allows us to offer a fun and engaging experience that
                 reflects our commitment to drivers and sets Bubbledrive apart
-                from conventional lottery platform.
+                from conventional lottery platforms.
               </p>
             </div>
 
