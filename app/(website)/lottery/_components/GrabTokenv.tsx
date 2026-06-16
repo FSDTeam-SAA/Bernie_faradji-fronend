@@ -353,7 +353,7 @@ export default function GrabToken() {
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.45 }}
           >
-            No active lottery prize available right now.
+            No active lottery prize available right now for this zone.
           </motion.div>
         )}
 
