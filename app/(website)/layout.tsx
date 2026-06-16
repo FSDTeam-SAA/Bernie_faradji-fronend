@@ -1,6 +1,5 @@
 import Footer from "@/components/common/Footer";
 import Navbar from "@/components/common/Navbar";
-import { GoogleAnalytics } from "@next/third-parties/google";
 import "../globals.css";
 
 export default function RootLayout({
@@ -13,7 +12,6 @@ export default function RootLayout({
       <Navbar />
       <div>{children}</div>
       <Footer />
-      <GoogleAnalytics gaId={process.env.GOOGLE_ANALYTICS_ID!} />
     </div>
   );
 }

@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
-import { DM_Serif_Display, Montserrat, Geist } from "next/font/google";
-import "./globals.css";
-import { cn } from "@/lib/utils";
-import SmoothScrollProvider from "@/components/provider/SmoothScrollprovider";
-import NextTopLoader from "nextjs-toploader";
-import { QueryClientProvider } from "@/components/provider/QueryClientProvider";
 import AuthSessionProvider from "@/components/provider/AuthSessionProvider";
+import { QueryClientProvider } from "@/components/provider/QueryClientProvider";
+import SmoothScrollProvider from "@/components/provider/SmoothScrollprovider";
 import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import type { Metadata } from "next";
+import { DM_Serif_Display, Geist, Montserrat } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
+import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -50,6 +51,7 @@ export default function RootLayout({
           <SmoothScrollProvider>
             <AuthSessionProvider>{children}</AuthSessionProvider>
             <Toaster position="top-right" richColors />
+            <GoogleAnalytics gaId={process.env.GOOGLE_ANALYTICS_ID!} />
           </SmoothScrollProvider>
         </QueryClientProvider>
       </body>
