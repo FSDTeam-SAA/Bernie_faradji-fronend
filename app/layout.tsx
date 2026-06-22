@@ -3,7 +3,7 @@ import { QueryClientProvider } from "@/components/provider/QueryClientProvider";
 import SmoothScrollProvider from "@/components/provider/SmoothScrollprovider";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
-import { GoogleAnalytics } from "@next/third-parties/google";
+import { GoogleAnalytics, GoogleTagManager } from "@next/third-parties/google";
 import type { Metadata } from "next";
 import { DM_Serif_Display, Geist, Montserrat } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
@@ -45,6 +45,7 @@ export default function RootLayout({
         geist.variable,
       )}
     >
+      <GoogleTagManager gtmId="GTM-PD4TRHNS" />
       <body>
         <NextTopLoader color="#004EB0" height={3} showSpinner={false} />
         <QueryClientProvider>
