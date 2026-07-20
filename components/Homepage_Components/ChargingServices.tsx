@@ -80,10 +80,10 @@ export default function ChargingServices() {
   });
 
   return (
-    <section id="journey-plan" className="scroll-mt-28 bg-[#F8FBFF] py-20 md:py-24 lg:py-28">
+    <section id="journey-plan" className="scroll-mt-28 bg-[#F8FBFF] py-10 md:py-24 lg:py-28">
       <div className="container mx-auto px-4 md:px-6">
         <div className="mx-auto text-center">
-          <h2 className="text-3xl font-normal leading-tight text-[#4E4E4E] md:text-[50px]">
+          <h2 className="text-2xl font-normal leading-tight text-[#4E4E4E] md:text-[50px]">
             Charging Services Overview
           </h2>
 
@@ -94,7 +94,7 @@ export default function ChargingServices() {
           </p>
         </div>
 
-        <div className="mx-auto mt-12 grid max-w-[760px] grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto mt-12 grid max-w-[760px] grid-cols-2 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, index) => (
               <CategoryCardSkeleton key={index} />
@@ -111,10 +111,13 @@ export default function ChargingServices() {
             categories.map((category) => {
               const title = category.name?.trim() || "Journey Category";
               const iconUrl = category.icon?.trim();
+              const journeyHref = `/journey?categoryId=${encodeURIComponent(category._id)}`;
 
               return (
-                <div
+                <Link
                   key={category._id}
+                  href={journeyHref}
+                  aria-label={`Plan your journey for ${title}`}
                   className="group relative cursor-pointer overflow-hidden rounded-lg bg-white px-6 py-8 text-center shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_25px_60px_rgba(0,91,200,0.20)]"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 scale-x-0 bg-[#005cc8] transition-transform duration-500 group-hover:scale-x-100" />
@@ -132,12 +135,12 @@ export default function ChargingServices() {
                     )}
                   </div>
 
-                  <h3 className="mt-5 text-base font-medium text-[#555] transition-colors duration-300 group-hover:text-[#005cc8]">
+                  <h3 className="mt-5 text-sm md:text-base font-medium text-[#555] transition-colors duration-300 group-hover:text-[#005cc8]">
                     {title}
                   </h3>
 
                   <div className="pointer-events-none absolute -bottom-12 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full bg-[#005cc8]/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
-                </div>
+                </Link>
               );
             })
           )}

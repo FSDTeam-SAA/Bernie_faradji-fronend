@@ -5,9 +5,9 @@ import Link from "next/link";
 
 export default function InsuranceOpportunities() {
   return (
-    <section id="insurance" className="scroll-mt-28 overflow-hidden bg-[#F8FBFF] py-20 md:py-24 lg:py-28">
+    <section id="insurance" className="scroll-mt-28 overflow-hidden bg-[#F8FBFF] py-5 md:py-24 lg:py-28">
       <div className="container mx-auto px-4 md:px-0">
-        <div className="grid items-center gap-14 lg:grid-cols-2">
+        <div className="grid items-center gap-9 lg:grid-cols-2 lg:gap-14">
           {/* Left Content */}
           <div className="relative">
             {/* Small blur effect */}
@@ -15,22 +15,22 @@ export default function InsuranceOpportunities() {
 
             <div className="relative z-10 max-w-[720px]">
 
-              <h2 className="mt-6 text-4xl font-normal leading-tight tracking-tight text-[#353535] md:text-5xl lg:text-[50px] lg:leading-[1.7]">
+              <h2 className="mt-6 text-[30px] font-normal leading-tight tracking-tight text-[#353535] sm:text-4xl md:text-5xl lg:text-[50px] lg:leading-[1.7]">
                 Special Insurance
                 <br />
                 Opportunities
               </h2>
 
-              <p className="mt-7 text-base leading-8 text-[#4E4E4E] md:text-lg">
+              <p className="mt-5 text-[15px] leading-7 text-[#4E4E4E] sm:text-base md:mt-7 md:text-lg md:leading-8">
                 Protecting what matters most should never feel complicated. At Bubbledrive, we provide reliable insurance opportunities designed to give individuals and families confidence for the future. From financial protection to peace of mind, our platform connects users with accessible and trusted coverage options tailored to modern lifestyles.
               </p>
 
           
 
               {/* Button */}
-              <div className="mt-10">
+              <div className="mt-8 md:mt-10">
                 <Link href="/insurance">
-                <Button className="group montserrat cursor-pointer h-14 rounded-md bg-[#004EB0] px-8 text-base font-bold text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-[#004EB0]/90 hover:shadow-2xl">
+                <Button className="group montserrat h-12 w-full cursor-pointer justify-center rounded-md bg-[#004EB0] px-5 text-[15px] font-bold text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-[#004EB0]/90 hover:shadow-2xl sm:h-14 sm:w-auto sm:px-8 sm:text-base">
                   View Insurance Listings
 
                   <ArrowRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
@@ -41,18 +41,18 @@ export default function InsuranceOpportunities() {
           </div>
 
           {/* Right Image */}
-          <div className="relative">
+          <div className="relative w-full">
           
 
-            <div className="group relative overflow-hidden rounded-[8px] ">
+            <div className="group relative mx-auto w-full max-w-[624px] overflow-hidden rounded-[8px] lg:mx-0">
               {/* Image */}
-              <div className="relative h-[320px] w-[624px] overflow-hidden md:h-[420px]">
+              <div className="relative aspect-[1.55] w-full overflow-hidden rounded-[8px] md:aspect-auto md:h-[420px] lg:w-[624px]">
                 <Image
                   src="/Insurance.png"
                   alt="Insurance"
                   fill
                   priority
-                  className="object-cover rounded-[8px] h-full w-full transition-transform duration-700 group-hover:scale-110"
+                  className="rounded-[8px] object-cover transition-transform duration-700 group-hover:scale-110"
                 />
               </div>
             </div>
