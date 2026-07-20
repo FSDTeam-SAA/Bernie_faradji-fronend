@@ -12,7 +12,7 @@ export default function AboutUs() {
   ];
 
   return (
-    <section id="about" className="scroll-mt-28 bg-[#F8FBFF] py-20 md:py-24">
+    <section id="about" className="scroll-mt-28 bg-[#F8FBFF] py-10 md:py-24">
       <div className="mx-auto  container px-4 md:px-6">
         {/* Header */}
         <motion.div
@@ -37,35 +37,35 @@ export default function AboutUs() {
           transition={{ duration: 0.6, delay: 0.1 }}
           viewport={{ once: true, amount: 0.3 }}
         >
-          <p className="text-lg font-normal leading-7 text-[#4E4E4E]">
+          <p className="text-sm md:text-lg font-normal leading-7 text-[#4E4E4E]">
             <span className="font-semibold text-[#1A365D]">Welcome to Bubbledrive </span> {" "} 
             our mission is simple: to create a smarter, more rewarding driving experience for 
             everyday motorists. We&apos;ve built a driver-focused ecosystem designed to help vehicle 
             owners save both time and money while managing their everyday driving needs.
           </p>
 
-          <p className="text-lg font-normal leading-7 text-[#4E4E4E]">
+          <p className="text-sm md:text-lg  font-normal leading-7 text-[#4E4E4E]">
             <span className="font-semibold text-[#1A365D]">A Platform Built for Drivers</span> {" "} 
             Bubbledrive brings together a range of services that help motorists manage their 
             driving-related expenses in one place, including a dedicated insurance section. 
             Every aspect of Bubbledrive is focused on creating a better experience for vehicle owners.
           </p>
 
-          <p className="text-lg font-normal leading-7 text-[#4E4E4E]">
+          <p className="text-sm md:text-lg  font-normal leading-7 text-[#4E4E4E]">
             <span className="font-semibold text-[#1A365D]">Making Driving More Rewarding</span> {" "}  
             What makes Bubbledrive truly unique is our driver-exclusive lottery and rewards system. 
             Participation is reserved for eligible drivers with a vehicle registered in their own name, 
             and your vehicle registration number forms an important part of the lottery experience.
           </p>
 
-          <p className="text-lg font-normal leading-7 text-[#4E4E4E]">
+          <p className="text-sm md:text-lg  font-normal leading-7 text-[#4E4E4E]">
             <span className="font-semibold text-[#1A365D]">An Exclusive Driver Community</span> {" "}  
             When you join Bubbledrive, you become part of an exclusive community built around supporting 
             drivers. We&apos;re committed to developing new ways to help drivers maximise value from their 
             membership while making everyday motoring more affordable and enjoyable.
           </p>
 
-          <p className="text-lg font-normal leading-7 text-[#4E4E4E]">
+          <p className="text-sm md:text-lg font-normal leading-7 text-[#4E4E4E]">
             <span className="font-semibold text-[#1A365D]">Our Vision</span> {" "}  
             To become the UK&apos;s leading driver-focused platform, combining practical motoring services, 
             member savings, and innovative reward opportunities within a single trusted destination. 

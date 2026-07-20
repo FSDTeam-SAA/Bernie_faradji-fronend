@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { Suspense } from 'react';
 
 import OneDayPass from './_components/OneDayPass';
 import SubscriptionPlans from './_components/SubscriptionPlans';
@@ -50,7 +51,9 @@ export default function JourneyDiscountPlansPage() {
           </motion.div>
 
           <TabsContent value="oneDay" className="mt-6 md:mt-7">
-            <OneDayPass />
+            <Suspense fallback={null}>
+              <OneDayPass />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="subscription" className="mt-6 md:mt-7 lg:pb-50 ">

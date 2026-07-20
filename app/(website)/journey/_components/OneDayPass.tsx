@@ -5,6 +5,7 @@ import { addDays, addMonths, differenceInCalendarDays, format, startOfDay } from
 import { motion } from 'framer-motion';
 import { ArrowRight, CarFront, ChevronLeft, ChevronRight, Circle, CircleAlert, Repeat2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -27,6 +28,7 @@ interface CategoryApiItem {
   rateActual?: number;
   rateDiscounted?: number;
   returnPrice?: number;
+  hasLateFee?: boolean;
   icon?: string;
   subOptions?: string[];
 }
@@ -51,6 +53,7 @@ type JourneyOption = {
   save: string | null;
   price: string;
   returnPrice: string;
+  hasLateFee: boolean;
   icon: string | null;
   subOptions: string[];
 };
@@ -61,6 +64,11 @@ interface JourneyCheckoutPayload {
   preferredDate: string;
   journeyType: JourneyType;
   subOption?: string;
+}
+
+interface LateFeeCheckoutPayload {
+  vehicleNumber: string;
+  preferredDate: string;
 }
 
 interface JourneyCheckoutResponse {
@@ -76,8 +84,17 @@ interface JourneySettingsApiResponse {
   message?: string;
   data?: {
     lateFee?: number;
+    lateFee1?: number;
+    lateFee2?: number;
+    lateFee3?: number;
   };
 }
+
+type JourneyLateFees = {
+  lateFee1: number;
+  lateFee2: number;
+  lateFee3: number;
+};
 
 const gbpFormatter = new Intl.NumberFormat('en-GB', {
   style: 'currency',
@@ -120,7 +137,10 @@ const fetchJourneyCategories = async (): Promise<CategoryApiItem[]> => {
   return data.data?.categories ?? [];
 };
 
-const fetchLateFeeSetting = async (): Promise<number> => {
+const getValidFeeAmount = (value?: number): number =>
+  typeof value === 'number' && !Number.isNaN(value) && value >= 0 ? value : 0;
+
+const fetchLateFeeSettings = async (): Promise<JourneyLateFees> => {
   const response = await fetch(`${getApiBaseUrl()}/journeys/settings`, {
     method: 'GET',
     headers: {
@@ -134,13 +154,13 @@ const fetchLateFeeSetting = async (): Promise<number> => {
   }
 
   const data: JourneySettingsApiResponse = await response.json();
-  const lateFee = data.data?.lateFee;
+  const fallbackLateFee = getValidFeeAmount(data.data?.lateFee);
 
-  if (typeof lateFee !== 'number' || Number.isNaN(lateFee) || lateFee < 0) {
-    return 0;
-  }
-
-  return lateFee;
+  return {
+    lateFee1: getValidFeeAmount(data.data?.lateFee1 ?? fallbackLateFee),
+    lateFee2: getValidFeeAmount(data.data?.lateFee2 ?? fallbackLateFee),
+    lateFee3: getValidFeeAmount(data.data?.lateFee3 ?? fallbackLateFee),
+  };
 };
 
 const formatPrice = (value?: number): string => gbpFormatter.format(value ?? 0);
@@ -160,6 +180,30 @@ const getSaveLabel = (actual?: number, discounted?: number): string | null => {
 
   const savedPercentage = Math.round(((actual - discounted) / actual) * 100);
   return savedPercentage > 0 ? `SAVE ${savedPercentage}%` : null;
+};
+
+const getLateFeeByDateOffset = (daysFromToday: number | null, lateFees: JourneyLateFees): number => {
+  switch (daysFromToday) {
+    case -1:
+      return lateFees.lateFee1;
+    case -2:
+      return lateFees.lateFee2;
+    case -3:
+      return lateFees.lateFee3;
+    default:
+      return 0;
+  }
+};
+
+const redirectToCheckoutUrl = (data: JourneyCheckoutResponse): void => {
+  const checkoutUrl = data?.data?.url;
+
+  if (!checkoutUrl) {
+    toast.error('Checkout URL missing. Please try again.');
+    return;
+  }
+
+  window.location.href = checkoutUrl;
 };
 
 const mapCategoryToJourneyOption = (category: CategoryApiItem): JourneyOption => {
@@ -183,6 +227,7 @@ const mapCategoryToJourneyOption = (category: CategoryApiItem): JourneyOption =>
     save: getSaveLabel(actualRate, discountedRate),
     price: formatPrice(discountedRate),
     returnPrice: formatPrice(returnPriceValue),
+    hasLateFee: category.hasLateFee === true,
     icon: category.icon?.trim() || null,
     subOptions,
   };
@@ -190,6 +235,7 @@ const mapCategoryToJourneyOption = (category: CategoryApiItem): JourneyOption =>
 
 export default function OneDayPass() {
   const { data: session, status: sessionStatus } = useSession();
+  const searchParams = useSearchParams();
   const [selectedJourney, setSelectedJourney] = useState<string | null>(null);
   const [selectedSubOption, setSelectedSubOption] = useState<string | null>(null);
   const [selectedJourneyType, setSelectedJourneyType] = useState<JourneyType | null>(null);
@@ -199,6 +245,7 @@ export default function OneDayPass() {
   const [calendarMonth, setCalendarMonth] = useState<Date>(() => startOfDay(new Date()));
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
+  const handledCategoryParamRef = useRef<string | null>(null);
 
   const {
     data: categories = [],
@@ -210,9 +257,9 @@ export default function OneDayPass() {
     queryFn: fetchJourneyCategories,
   });
 
-  const { data: configuredLateFee = 0 } = useQuery<number, Error>({
+  const { data: configuredLateFees = { lateFee1: 0, lateFee2: 0, lateFee3: 0 } } = useQuery<JourneyLateFees, Error>({
     queryKey: ['journey-settings-late-fee'],
-    queryFn: fetchLateFeeSetting,
+    queryFn: fetchLateFeeSettings,
   });
 
   const journeyOptions = useMemo(
@@ -228,14 +275,18 @@ export default function OneDayPass() {
     return journeyOptions.find((option) => option.id === selectedJourney);
   }, [journeyOptions, selectedJourney]);
   const activeJourneyId = activeJourney?.id ?? '';
+  const requestedCategoryId = searchParams.get('categoryId')?.trim() ?? '';
 
   const formattedDate = useMemo(
     () => (selectedDate ? format(selectedDate, 'dd/MM/yy') : ''),
     [selectedDate]
   );
   const today = useMemo(() => startOfDay(new Date()), []);
-  const yesterday = useMemo(() => addDays(today, -1), [today]);
-  const calendarStartMonth = useMemo(() => new Date(today.getFullYear() - 5, 0, 1), [today]);
+  const earliestSelectableDate = useMemo(() => addDays(today, -3), [today]);
+  const calendarStartMonth = useMemo(
+    () => new Date(earliestSelectableDate.getFullYear(), earliestSelectableDate.getMonth(), 1),
+    [earliestSelectableDate]
+  );
   const calendarEndMonth = useMemo(() => new Date(today.getFullYear() + 15, 11, 31), [today]);
   const lastNavigableMonth = useMemo(
     () => new Date(calendarEndMonth.getFullYear(), calendarEndMonth.getMonth(), 1),
@@ -261,31 +312,45 @@ export default function OneDayPass() {
     () => (selectedJourneyDate ? differenceInCalendarDays(selectedJourneyDate, today) : null),
     [selectedJourneyDate, today]
   );
-  const hasLateFee = daysFromToday !== null && daysFromToday < 0;
-  const lateFeeAmount = hasLateFee ? configuredLateFee : 0;
+  const isSelectedDateAllowed = daysFromToday === null || daysFromToday >= -3;
+  const backdatedDayCount = daysFromToday !== null && daysFromToday < 0 ? Math.abs(daysFromToday) : 0;
+  const shouldApplyLateFee = activeJourney?.hasLateFee === true && backdatedDayCount >= 1 && backdatedDayCount <= 3;
+  const shouldApplyStandaloneLateFee = !activeJourney && backdatedDayCount >= 1 && backdatedDayCount <= 3;
+  const shouldShowLateFee = shouldApplyLateFee || shouldApplyStandaloneLateFee;
+  const lateFeeAmount = shouldShowLateFee ? getLateFeeByDateOffset(daysFromToday, configuredLateFees) : 0;
+  const lateFeeLabel = shouldShowLateFee
+    ? `Late Fee (${backdatedDayCount} ${backdatedDayCount === 1 ? 'day' : 'days'})`
+    : 'Late Fee';
   const requiresSubOption = (activeJourney?.subOptions.length ?? 0) > 0;
   const hasRequiredSubOption = !requiresSubOption || !!selectedSubOption;
   const hasReturnJourneyPrice = (activeJourney?.returnPriceValue ?? 0) > 0;
   const basePriceValue =
     activeJourney && selectedJourneyType === 'return' ? activeJourney.returnPriceValue : activeJourney?.priceValue ?? 0;
   const totalDueValue = basePriceValue + lateFeeAmount;
-  const summaryTitle = activeJourney?.title ?? 'Select a pass';
+  const summaryTitle = activeJourney?.title ?? 'Late fee payment';
+  const summaryPassLabel = activeJourney ? `${summaryTitle} (1 Day)` : summaryTitle;
   const summaryJourneyType =
     selectedJourneyType === 'one-way' ? 'One-way' : selectedJourneyType === 'return' ? 'Return' : null;
   const summaryPrice = activeJourney && selectedJourneyType ? formatPrice(basePriceValue) : '--';
   const summaryLateFee = formatPrice(lateFeeAmount);
-  const totalDuePrice = activeJourney && selectedJourneyType ? formatPrice(totalDueValue) : '--';
+  const totalDuePrice = activeJourney
+    ? selectedJourneyType
+      ? formatPrice(totalDueValue)
+      : '--'
+    : selectedDate
+      ? formatPrice(totalDueValue)
+      : '--';
   const canConfirmJourneyOptions =
     !!activeJourney && hasRequiredSubOption && !!selectedJourneyType && (selectedJourneyType !== 'return' || hasReturnJourneyPrice);
+  const hasCommonCheckoutFields = !!selectedDate && isSelectedDateAllowed && isVehicleNumberValid;
   const canProceedToCheckout =
-    !!activeJourney &&
-    hasRequiredSubOption &&
-    !!selectedJourneyType &&
-    (selectedJourneyType !== 'return' || hasReturnJourneyPrice) &&
-    !!selectedDate &&
-    isVehicleNumberValid &&
-    !isCategoriesLoading &&
-    !isCategoriesError;
+    hasCommonCheckoutFields &&
+    (!activeJourney ||
+      (hasRequiredSubOption &&
+        !!selectedJourneyType &&
+        (selectedJourneyType !== 'return' || hasReturnJourneyPrice) &&
+        !isCategoriesLoading &&
+        !isCategoriesError));
 
   const checkoutMutation = useMutation<JourneyCheckoutResponse, Error, JourneyCheckoutPayload>({
     mutationFn: async (payload) => {
@@ -308,27 +373,42 @@ export default function OneDayPass() {
 
       return response.json();
     },
-    onSuccess: (data) => {
-      const checkoutUrl = data?.data?.url;
-
-      if (!checkoutUrl) {
-        toast.error('Checkout URL missing. Please try again.');
-        return;
-      }
-
-      window.location.href = checkoutUrl;
-    },
+    onSuccess: redirectToCheckoutUrl,
     onError: (error) => {
       toast.error(error.message || 'Something went wrong while starting payment.');
     },
   });
 
-  const handleProceedToPayment = () => {
-    if (!activeJourney) {
-      toast.error('Please choose a journey category.');
-      return;
-    }
+  const lateFeeCheckoutMutation = useMutation<JourneyCheckoutResponse, Error, LateFeeCheckoutPayload>({
+    mutationFn: async (payload) => {
+      if (!session?.accessToken) {
+        throw new Error('Please login first to continue payment.');
+      }
 
+      const response = await fetch(`${getApiBaseUrl()}/journeys/pay-late-fee`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(await readApiErrorMessage(response, 'Failed to create late fee checkout session.'));
+      }
+
+      return response.json();
+    },
+    onSuccess: redirectToCheckoutUrl,
+    onError: (error) => {
+      toast.error(error.message || 'Something went wrong while starting late fee payment.');
+    },
+  });
+
+  const isCheckoutPending = checkoutMutation.isPending || lateFeeCheckoutMutation.isPending;
+
+  const handleProceedToPayment = () => {
     if (!normalizedVehicleNumber) {
       toast.error('Please enter vehicle registration number.');
       return;
@@ -344,6 +424,24 @@ export default function OneDayPass() {
       return;
     }
 
+    if (!isSelectedDateAllowed) {
+      toast.error('Please select today, a future date, or one of the previous 3 days.');
+      return;
+    }
+
+    if (sessionStatus !== 'authenticated' || !session?.accessToken) {
+      toast.error('Please login first to continue payment.');
+      return;
+    }
+
+    if (!activeJourney) {
+      lateFeeCheckoutMutation.mutate({
+        vehicleNumber: normalizedVehicleNumber,
+        preferredDate: format(selectedDate, 'yyyy-MM-dd'),
+      });
+      return;
+    }
+
     if (requiresSubOption && !selectedSubOption) {
       setIsJourneyOptionModalOpen(true);
       toast.error(`Please select a ${activeJourney.title} option.`);
@@ -353,11 +451,6 @@ export default function OneDayPass() {
     if (!selectedJourneyType) {
       setIsJourneyOptionModalOpen(true);
       toast.error('Please select one-way or return journey.');
-      return;
-    }
-
-    if (sessionStatus !== 'authenticated' || !session?.accessToken) {
-      toast.error('Please login first to continue payment.');
       return;
     }
 
@@ -374,6 +467,30 @@ export default function OneDayPass() {
 
     checkoutMutation.mutate(checkoutPayload);
   };
+
+  useEffect(() => {
+    if (!requestedCategoryId || handledCategoryParamRef.current === requestedCategoryId || journeyOptions.length === 0) {
+      return;
+    }
+
+    const requestedJourney = journeyOptions.find((option) => option.id === requestedCategoryId);
+    handledCategoryParamRef.current = requestedCategoryId;
+
+    if (!requestedJourney) {
+      return;
+    }
+
+    const openRequestedJourney = window.setTimeout(() => {
+      setSelectedJourney(requestedJourney.id);
+      setSelectedSubOption(null);
+      setSelectedJourneyType(null);
+      setIsJourneyOptionModalOpen(true);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(openRequestedJourney);
+    };
+  }, [journeyOptions, requestedCategoryId]);
 
   useEffect(() => {
     if (!isCalendarOpen) {
@@ -445,6 +562,7 @@ export default function OneDayPass() {
     <>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
       <motion.section
+        id="one-day-pass"
         initial={{ opacity: 0, y: 26 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55 }}
@@ -561,7 +679,7 @@ export default function OneDayPass() {
                   hideNavigation
                   startMonth={calendarStartMonth}
                   endMonth={calendarEndMonth}
-                  disabled={{ before: yesterday }}
+                  disabled={{ before: earliestSelectableDate }}
                   weekStartsOn={6}
                   onSelect={(date) => {
                     if (!date) {
@@ -705,13 +823,15 @@ export default function OneDayPass() {
         <div className="relative mt-5 rounded-[10px] border border-[#D7E4F4] bg-white p-4">
           <div className="montserrat flex items-start justify-between gap-4 text-[13px] text-[#5B6B82]">
             <span>Selected pass</span>
-            <span className="max-w-[180px] text-right font-semibold text-[#143D73]">{summaryTitle} (1 Day)</span>
+            <span className="max-w-[180px] text-right font-semibold text-[#143D73]">{summaryPassLabel}</span>
           </div>
 
-          <div className="montserrat mt-3 flex items-center justify-between gap-4 text-[14px] text-[#5B6B82]">
-            <span>Base price</span>
-            <span className="font-semibold text-[#143D73]">{summaryPrice}</span>
-          </div>
+          {activeJourney ? (
+            <div className="montserrat mt-3 flex items-center justify-between gap-4 text-[14px] text-[#5B6B82]">
+              <span>Base price</span>
+              <span className="font-semibold text-[#143D73]">{summaryPrice}</span>
+            </div>
+          ) : null}
 
           {selectedDate ? (
             <div className="montserrat mt-3 flex items-center justify-between gap-4 text-[14px] text-[#5B6B82]">
@@ -735,11 +855,11 @@ export default function OneDayPass() {
           ) : null}
         </div>
 
-        {hasLateFee ? (
+        {shouldShowLateFee ? (
           <div className="montserrat mt-3 flex items-center justify-between rounded-[10px] border border-red-100 bg-red-50 px-4 py-3 text-[15px]">
             <span className="flex items-center gap-2">
               <CircleAlert className="size-4 text-red-500" />
-              <p className="text-red-500">Late Fee</p>
+              <p className="text-red-500">{lateFeeLabel}</p>
             </span>
             <span className="font-semibold text-red-500">{summaryLateFee}</span>
           </div>
@@ -754,14 +874,14 @@ export default function OneDayPass() {
 
         <Button
           onClick={handleProceedToPayment}
-          disabled={!canProceedToCheckout || checkoutMutation.isPending || sessionStatus === 'loading'}
+          disabled={!canProceedToCheckout || isCheckoutPending || sessionStatus === 'loading'}
           className={`montserrat mt-4 h-12 w-full rounded-[8px] text-[15px] font-semibold text-white sm:text-[16px] ${
-            !canProceedToCheckout || checkoutMutation.isPending || sessionStatus === 'loading'
+            !canProceedToCheckout || isCheckoutPending || sessionStatus === 'loading'
               ? 'cursor-not-allowed bg-gray-400 text-black/50'
               : 'cursor-pointer bg-[#004EB0] shadow-[0_12px_24px_rgba(0,78,176,0.26)] hover:bg-[#004EB0]/90'
           }`}
         >
-          {checkoutMutation.isPending ? 'Processing...' : 'Proceed to Secure Payment'}
+          {isCheckoutPending ? 'Processing...' : 'Proceed to Secure Payment'}
         </Button>
       </motion.section>
       </div>
