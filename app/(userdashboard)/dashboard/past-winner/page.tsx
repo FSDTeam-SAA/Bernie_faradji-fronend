@@ -211,15 +211,15 @@ export default function PastWinnerPage() {
           <TableHeader className="bg-[#E0EEFF]">
             <TableRow>
               <TableHead className="text-center text-xs sm:text-sm">Winner Name</TableHead>
-              <TableHead className="text-center text-xs sm:text-sm">Email</TableHead>
+              {/* <TableHead className="text-center text-xs sm:text-sm">Email</TableHead> */}
               <TableHead className="text-center text-xs sm:text-sm">Prize</TableHead>
-              <TableHead className="text-center text-xs sm:text-sm">
+              {/* <TableHead className="text-center text-xs sm:text-sm">
                 Vehicle Number
-              </TableHead>
+              </TableHead> */}
               <TableHead className="text-center text-xs sm:text-sm">
                 Selection Type
               </TableHead>
-              <TableHead className="text-center text-xs sm:text-sm">Won Date</TableHead>
+              <TableHead className="text-center text-xs sm:text-sm">Win Date</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -228,9 +228,9 @@ export default function PastWinnerPage() {
               winnerRows.map((winner) => (
                 <TableRow key={winner.id}>
                   <TableCell className="py-4 text-center font-bold">{winner.name}</TableCell>
-                  <TableCell className="text-center">{winner.email}</TableCell>
+                  {/* <TableCell className="text-center">{winner.email}</TableCell> */}
                   <TableCell className="text-center">{winner.prize}</TableCell>
-                  <TableCell className="text-center">{winner.vehicleNumber}</TableCell>
+                  {/* <TableCell className="text-center">{winner.vehicleNumber}</TableCell> */}
                   <TableCell className="text-center">{winner.selectionType}</TableCell>
                   <TableCell className="text-center">{winner.wonDate}</TableCell>
                  
